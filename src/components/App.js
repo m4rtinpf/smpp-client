@@ -35,6 +35,67 @@ const submitModes = [
   },
 ]
 
+
+const MIN_PORT = 1;
+const MAX_PORT = 65535;
+const DEFAULT_PORT = 2775;
+const MAX_SYSTEM_ID_LENGTH = 16;
+const MAX_PASSWORD_LENGTH = 9;
+const MAX_SYSTEM_TYPE_LENGTH = 13;
+const DEFAULT_ADDR_TON = 0;
+const MAX_ADDR_TON_LENGTH = 1;
+const DEFAULT_ADDR_NPI = 0;
+const MAX_ADDR_NPI_LENGTH = 1;
+const DEFAULT_SOURCE_ADDR_TON = 0;
+const MAX_SOURCE_ADDR_TON_LENGTH = 1;
+const DEFAULT_SOURCE_ADDR_NPI = 0;
+const MAX_SOURCE_ADDR_NPI_LENGTH = 1;
+const DEFAULT_DEST_ADDR_TON = 0;
+const MAX_DEST_ADDR_TON_LENGTH = 1;
+const DEFAULT_DEST_ADDR_NPI = 0;
+const MAX_DEST_ADDR_NPI_LENGTH = 1;
+const DEFAULT_SERVICE_TYPE = 0;
+const MAX_SERVICE_TYPE_LENGTH = 6;
+const DEFAULT_BULK_SUBMIT_TIMES = 0;
+
+
+function Field(props) {
+  const [text, setText] = React.useState(props.defaultValue);
+  const [errorMessage, setErrorMessage] = React.useState("");
+
+  React.useEffect(() => {
+    // Set errorMessage only if validationFunction(text) == true
+    if (props.validationFunction(text)) {
+      setErrorMessage(
+        props.errorMessageText
+      );
+    }
+  }, [text]);
+
+  React.useEffect(() => {
+    // Set empty erroMessage only if validationFunction(text) == false
+    // and errorMessage is not empty.
+    // avoids setting empty errorMessage if the errorMessage is already empty
+    if (!(props.validationFunction(text)) && errorMessage) {
+      setErrorMessage("");
+    }
+  }, [text, errorMessage]);
+
+  return (
+    <TextField
+      {...props.childProps}
+      error={props.validationFunction(text)}
+      helperText={errorMessage}
+      onChange={(e) => setText(e.target.value)}
+      value={text}
+    />
+  )
+}
+
+Field.defaultProps = {
+  defaultValue: "",
+};
+
 export default function App(props) {
   const [state, setState] = React.useState({
     dataCoding: "0",
@@ -49,56 +110,6 @@ export default function App(props) {
       [evt.target.name]: value
     });
   }
-
-
-  
-  const MIN_PORT = 1;
-  const MAX_PORT = 65535;
-
-  const [port, setPort] = React.useState(2775);
-  const [portErrorMessage, setPortErrorMessage] = React.useState("");
-
-  React.useEffect(() => {
-    // Set errorMessage only if port is greater than MAX_PORT or less than MIN_PORT
-    if (port > MAX_PORT || port < MIN_PORT) {
-      setPortErrorMessage(
-        "Port must be between 1 and 65535"
-      );
-    }
-  }, [port]);
-
-  React.useEffect(() => {
-    // Set empty erroMessage only if port is not greater than MAX_PORT or less than MIN_PORT
-    // and errorMessage is not empty.
-    // avoids setting empty errorMessage if the errorMessage is already empty
-    if (!(port > MAX_PORT || port < MIN_PORT) && portErrorMessage) {
-      setPortErrorMessage("");
-    }
-  }, [port, portErrorMessage]);
-
-
-
-  const MAX_SYSTEM_ID_LENGTH = 16;
-
-  const [systemId, setSystemId] = React.useState("");
-  const [systemIdErrorMessage, setSystemIdErrorMessage] = React.useState("");
-
-  React.useEffect(() => {
-    if (systemId.length > MAX_SYSTEM_ID_LENGTH) {
-      setSystemIdErrorMessage(
-        "Max 16 octets"
-      );
-    }
-  }, [systemId]);
-
-  React.useEffect(() => {
-    if (!(systemId.length > MAX_SYSTEM_ID_LENGTH) && systemIdErrorMessage) {
-      setSystemIdErrorMessage("");
-    }
-  }, [systemId, systemIdErrorMessage]);
-
-
-
 
   return (
 
@@ -119,14 +130,14 @@ export default function App(props) {
         autoComplete="off"
       >
 
-        <TextField
-          required
-          id="system-id"
-          label="SystemId"
-          error={systemId.length > MAX_SYSTEM_ID_LENGTH}
-          helperText={systemIdErrorMessage}
-          onChange={(e) => setSystemId(e.target.value)}
-          value={systemId}
+        <Field
+          childProps={{
+            id: "system-id",
+            label: "SystemId",
+            required: true,
+          }}
+          errorMessageText={"Max " + MAX_SYSTEM_ID_LENGTH + " octets"}
+          validationFunction={(value) => { return (value.length > MAX_SYSTEM_ID_LENGTH) }}
         />
 
         <TextField
@@ -135,77 +146,67 @@ export default function App(props) {
           label="Hostname"
         />
 
-        <TextField
-          required
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          label="Password"
-          // helperText="Max 9 octets"
-          inputProps={{ maxLength: 9 }}
+        <Field
+          childProps={{
+            required: true,
+            id: "password",
+            type: "password",
+            autoComplete: "current-password",
+            label: "Password",
+          }}
+          errorMessageText={"Max " + MAX_PASSWORD_LENGTH + " octets"}
+          validationFunction={(value) => { return (value.length > MAX_PASSWORD_LENGTH) }}
         />
 
-        <TextField
-          required
-          id="port"
-          type="number"
-          label="Port"
-          error={port > MAX_PORT || port < MIN_PORT}
-          helperText={portErrorMessage}
-          onChange={(e) => setPort(e.target.value)}
-          value={port}
+        <Field
+          childProps={{
+            id: "port",
+            label: "Port",
+            type: "number",
+            required: true,
+          }}
+          defaultValue={DEFAULT_PORT}
+          errorMessageText={"Port must be between " + MIN_PORT + " and " + MAX_PORT}
+          validationFunction={(value) => { return (value > MAX_PORT || value < MIN_PORT) }}
         />
 
-        <TextField
-          required
-          id="system-type"
-          label="System Type"
-          // helperText="Max 13 octets"
-          inputProps={{ maxLength: 13 }}
+        <Field
+          childProps={{
+            required: true,
+            id: "system-type",
+            label: "System Type",
+          }}
+          errorMessageText={"Max " + MAX_SYSTEM_TYPE_LENGTH + " octets"}
+          validationFunction={(value) => { return (value.length > MAX_SYSTEM_TYPE_LENGTH) }}
         />
 
         <FormControlLabel control={<Switch />} label="Use SSL" />
 
-        <TextField
-          required
-          id="addr-ton"
-          type="number"
-          label="Addr_TON"
-          // helperText="1 octet"
-          defaultValue={0}
+        <Field
+          childProps={{
+            id: "addr-ton",
+            label: "Addr_TON",
+            type: "number",
+            required: true,
+          }}
+          defaultValue={DEFAULT_ADDR_TON}
+          errorMessageText={"Max " + MAX_ADDR_TON_LENGTH + " octets"}
+          validationFunction={(value) => { return (value.length > MAX_ADDR_TON_LENGTH) }}
         />
 
-        <TextField
-          required
-          id="addr-npi"
-          type="number"
-          label="Addr_NPI"
-          // helperText="1 octet"
-          defaultValue={0}
+        <Field
+          childProps={{
+            id: "addr-npi",
+            label: "Addr_NPI",
+            type: "number",
+            required: true,
+          }}
+          defaultValue={DEFAULT_ADDR_NPI}
+          errorMessageText={"Max " + MAX_ADDR_NPI_LENGTH + " octets"}
+          validationFunction={(value) => { return (value.length > MAX_ADDR_NPI_LENGTH) }}
         />
 
       </Box>
-
-      {/* <Grid container spacing={1}>
-        <Grid item xs={2}>
-          <FormControlLabel control={<Switch />} label="Reconnect" />
-        </Grid>
-        <Grid item xs={2}>
-          <Button variant="contained">
-            Connect
-          </Button>
-        </Grid>
-        <Grid item xs={2}>
-          <Button variant="contained">
-            Disconnect
-          </Button>
-        </Grid>
-        <Grid item xs={2}>
-          <Button variant="contained">
-            About
-          </Button>
-        </Grid>
-      </Grid> */}
 
       <Box
         component="form"
@@ -228,22 +229,28 @@ export default function App(props) {
           label="Source_Addr"
         />
 
-        <TextField
-          required
-          id="source-addr-ton"
-          label="Source_Addr_TON"
-          type="number"
-          // helperText="1 octet"
-          defaultValue={0}
+        <Field
+          childProps={{
+            id: "source-addr-ton",
+            label: "Source_Addr_TON",
+            type: "number",
+            required: true,
+          }}
+          defaultValue={DEFAULT_SOURCE_ADDR_TON}
+          errorMessageText={"Max " + MAX_SOURCE_ADDR_TON_LENGTH + " octets"}
+          validationFunction={(value) => { return (value.length > MAX_SOURCE_ADDR_TON_LENGTH) }}
         />
 
-        <TextField
-          required
-          id="source-addr-npi"
-          label="Source_Addr_NPI"
-          type="number"
-          // helperText="1 octet"
-          defaultValue={0}
+        <Field
+          childProps={{
+            id: "source-addr-npi",
+            label: "Source_Addr_NPI",
+            type: "number",
+            required: true,
+          }}
+          defaultValue={DEFAULT_SOURCE_ADDR_NPI}
+          errorMessageText={"Max " + MAX_SOURCE_ADDR_NPI_LENGTH + " octets"}
+          validationFunction={(value) => { return (value.length > MAX_SOURCE_ADDR_NPI_LENGTH) }}
         />
 
         <TextField
@@ -252,31 +259,39 @@ export default function App(props) {
           label="Dest_Addr"
         />
 
-        <TextField
-          required
-          id="dest-addr-ton"
-          label="Dest_Addr_TON"
-          type="number"
-          // helperText="1 octet"
-          defaultValue={0}
+        <Field
+          childProps={{
+            id: "dest-addr-ton",
+            label: "Dest_Addr_TON",
+            type: "number",
+            required: true,
+          }}
+          defaultValue={DEFAULT_DEST_ADDR_TON}
+          errorMessageText={"Max " + MAX_DEST_ADDR_TON_LENGTH + " octets"}
+          validationFunction={(value) => { return (value.length > MAX_DEST_ADDR_TON_LENGTH) }}
         />
 
-        <TextField
-          required
-          id="dest-addr-npi"
-          label="Dest_Addr_NPI"
-          type="number"
-          // helperText="1 octet"
-          defaultValue={0}
+        <Field
+          childProps={{
+            id: "dest-addr-npi",
+            label: "Dest_Addr_NPI",
+            type: "number",
+            required: true,
+          }}
+          defaultValue={DEFAULT_DEST_ADDR_NPI}
+          errorMessageText={"Max " + MAX_DEST_ADDR_NPI_LENGTH + " octets"}
+          validationFunction={(value) => { return (value.length > MAX_DEST_ADDR_NPI_LENGTH) }}
         />
 
-        <TextField
-          required
-          id="service-type"
-          label="Service Type"
-          // helperText="Max 6 octets"
-          inputProps={{ maxLength: 6 }}
-          defaultValue={0}
+        <Field
+          childProps={{
+            id: "service-type",
+            label: "Service Type",
+            required: true,
+          }}
+          defaultValue={DEFAULT_SERVICE_TYPE}
+          errorMessageText={"Max " + MAX_SERVICE_TYPE_LENGTH + " octets"}
+          validationFunction={(value) => { return (value.length > MAX_SERVICE_TYPE_LENGTH) }}
         />
 
         <TextField
@@ -285,7 +300,7 @@ export default function App(props) {
           label="Bulk async submit times"
           name="bulkSubmitTimes"
           type="number"
-          defaultValue={0}
+          defaultValue={DEFAULT_BULK_SUBMIT_TIMES}
         />
 
         <TextField
