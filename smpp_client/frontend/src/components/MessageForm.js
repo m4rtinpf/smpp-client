@@ -94,7 +94,17 @@ export default function MessageForm() {
         messageData["sourceAddr"] = formatPhoneNumber(messageData["sourceAddr"])
         messageData["destAddr"] = formatPhoneNumber(messageData["destAddr"])
 
-        console.log(JSON.stringify(messageData));
+        // todo fix this
+        if (messageData['bulkSubmitTimes'] === undefined) {
+            messageData['bulkSubmitTimes'] = 0;
+        }
+
+        const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(messageData),
+        };
+        fetch('/api/message', requestOptions).then((response) => response.json()).then((data) => console.log(data));
     };
 
     return (

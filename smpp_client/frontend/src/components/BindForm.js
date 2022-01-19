@@ -22,7 +22,12 @@ export default function BindForm() {
     } = useForm();
 
     const onSubmit = (bindData) => {
-        console.log(JSON.stringify(bindData));
+        const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bindData),
+        };
+        fetch('/api/bind', requestOptions).then((response) => response.json()).then((data) => console.log(data));
     };
 
     return (
