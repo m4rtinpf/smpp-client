@@ -6,6 +6,12 @@ import MessageForm from "./MessageForm";
 import LogField from "./LogField";
 
 export default function App() {
+  const [isBound, setIsBound] = useState(false);
+  const handleBound = () => {
+    // this.setIsBound(true);
+    // console.log("my state");
+  }
+
   return (
 
     <Container
@@ -15,7 +21,10 @@ export default function App() {
 
       <Typography variant="h2" align='center' sx={{ fontWeight: 'bold' }}>SMPP client</Typography>
 
-      <BindForm />
+      <BindForm
+        handleBound={this.handleBound}
+        isBound={isBound}
+      />
 
       <MessageForm />
 

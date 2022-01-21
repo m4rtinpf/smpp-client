@@ -13,7 +13,7 @@ const MAX_ADDR_TON_LENGTH = 1;
 const DEFAULT_ADDR_NPI = 0;
 const MAX_ADDR_NPI_LENGTH = 1;
 
-export default function BindForm() {
+export default function BindForm(props) {
     const {
         register,
         handleSubmit,
@@ -22,12 +22,19 @@ export default function BindForm() {
     } = useForm();
 
     const onSubmit = (bindData) => {
-        const requestOptions = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(bindData),
-        };
-        fetch('/api/bind', requestOptions).then((response) => response.json()).then((data) => console.log(data));
+        // const requestOptions = {
+        //     method: 'POST',
+        //     headers: { 'Content-Type': 'application/json' },
+        //     body: JSON.stringify(bindData),
+        // };
+        // fetch('/api/bind', requestOptions)
+        //     .then((response) => response.json())
+        //     .then((data) => {
+        //         // console.log(data);
+
+        //     });
+        console.log("my state");
+        // this.props.handleBound();
     };
 
     return (

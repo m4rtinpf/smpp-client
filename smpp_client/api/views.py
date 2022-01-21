@@ -5,6 +5,13 @@ from .models import Bind, Message
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
+import logging
+import sys
+
+import smpplib.gsm
+import smpplib.client
+import smpplib.consts
+
 
 class BindView(generics.ListAPIView):
     queryset = Bind.objects.all()
@@ -58,7 +65,34 @@ class CreateBindingView(APIView):
                 ])
                 print(BindSerializer(bind).data)
 
-                return Response(BindSerializer(bind).data, status=status.HTTP_200_OK)
+                # if you want to know what's happening
+                logging.basicConfig(level='DEBUG')
+
+                client = smpplib.client.Client(
+                    host=bind.hostname,
+                    port=bind.port,
+                    allow_unknown_opt_params=True,
+                )
+
+                # Print when obtain message_id
+                client.set_message_sent_handler(
+                    lambda pdu: sys.stdout.write('sent {} {}\n'.format(pdu.sequence, pdu.message_id)))
+                client.set_message_received_handler(
+                    lambda pdu: sys.stdout.write('delivered {}\n'.format(pdu.receipted_message_id)))
+
+                client.connect()
+                resp = client.bind_transceiver(
+                    system_id=bind.systemId,
+                    password=bind.password,
+                )
+
+                print(f"Some text: {client.state}")
+
+                if client.state == smpplib.consts.SMPP_CLIENT_STATE_BOUND_TRX:
+                    # todo better way? maybe using resp
+                    print('Client bound as transceiver')
+
+                return Response({'isBound': True}, status=status.HTTP_200_OK)
             else:
                 bind = Bind(
                     host=host,
