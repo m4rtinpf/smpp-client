@@ -94,7 +94,7 @@ export default function MessageForm() {
         messageData["sourceAddr"] = formatPhoneNumber(messageData["sourceAddr"])
         messageData["destAddr"] = formatPhoneNumber(messageData["destAddr"])
 
-        // todo fix this
+        // todo fix this (set default values for useForm)
         if (messageData['bulkSubmitTimes'] === undefined) {
             messageData['bulkSubmitTimes'] = 0;
         }

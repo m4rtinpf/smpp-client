@@ -1,5 +1,5 @@
 from django.db import models
-from .constants import FIELDS_CONSTRAINTS
+from .consts import FIELDS_CONSTRAINTS
 import string
 import random
 
@@ -30,7 +30,7 @@ class Bind(models.Model):
     sessionId = models.CharField(max_length=8, default=generate_unique_id_for_bind, unique=True)
     host = models.CharField(max_length=50, unique=True)
     systemId = models.CharField(max_length=FIELDS_CONSTRAINTS['max_system_id_length'])
-    hostname = models.CharField(max_length=20)  # todo max_length?
+    hostname = models.CharField(max_length=50)  # todo max_length?
     password = models.CharField(max_length=FIELDS_CONSTRAINTS['max_password_length'])
     port = models.IntegerField()
     systemType = models.CharField(max_length=FIELDS_CONSTRAINTS['max_system_type_length'])
