@@ -52,7 +52,7 @@ const DEFAULT_SERVICE_TYPE = 0;
 const MAX_SERVICE_TYPE_LENGTH = 6;
 const MAX_MESSAGE_TEXT_LENGTH = 160;
 
-const validatePhoneNumber = (str) => {
+const isValidPhoneNumber = (str) => {
     const phoneUtil = PhoneNumberUtil.getInstance();
     if (!str.startsWith('+')) {
         str = '+' + str;
@@ -80,7 +80,7 @@ const formatPhoneNumber = (str) => {
     return phoneUtil.format(number, PNF.E164);
 }
 
-export default function MessageForm() {
+export default function MessageForm(props) {
     const {
         register,
         handleSubmit,
@@ -147,7 +147,7 @@ export default function MessageForm() {
                             size="small"
                             {...register("sourceAddr", {
                                 required: true,
-                                validate: validatePhoneNumber,
+                                validate: isValidPhoneNumber,
                             })}
                             helperText={
                                 {
@@ -212,7 +212,7 @@ export default function MessageForm() {
                             size="small"
                             {...register("destAddr", {
                                 required: true,
-                                validate: validatePhoneNumber,
+                                validate: isValidPhoneNumber,
                             })}
                             helperText={
                                 {
@@ -365,6 +365,7 @@ export default function MessageForm() {
                             sx={{ m: 1 }}
                             size="small"
                             type="submit"
+                            disabled={!props.isBound}
                         >
                             Submit
                         </Button>

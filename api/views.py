@@ -5,12 +5,7 @@ from .models import Bind, Message
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-import logging
-import sys
-
-import smpplib.gsm
-import smpplib.client
-import smpplib.consts
+from .handle_smpp import MyThread
 
 
 class BindView(generics.ListAPIView):
@@ -65,32 +60,25 @@ class CreateBindingView(APIView):
                 ])
                 print(BindSerializer(bind).data)
 
-                # if you want to know what's happening
-                logging.basicConfig(level='DEBUG')
-
-                client = smpplib.client.Client(
-                    host=bind.hostname,
-                    port=bind.port,
-                    allow_unknown_opt_params=True,
-                )
-
-                # Print when obtain message_id
-                client.set_message_sent_handler(
-                    lambda pdu: sys.stdout.write('sent {} {}\n'.format(pdu.sequence, pdu.message_id)))
-                client.set_message_received_handler(
-                    lambda pdu: sys.stdout.write('delivered {}\n'.format(pdu.receipted_message_id)))
-
-                client.connect()
-                resp = client.bind_transceiver(
+                # Create a new thread
+                thread = MyThread(
                     system_id=bind.systemId,
+                    hostname=bind.hostname,
                     password=bind.password,
+                    port=bind.port,
+                    system_type=bind.systemType,
+                    use_ssl=bind.useSSL,
+                    addr_ton=bind.addrTON,
+                    addr_npi=bind.addrNPI,
+                    reconnect=bind.reconnect,
+                    host=bind.host,
                 )
 
-                print(f"Some text: {client.state}")
+                # Start the thread
+                thread.start()
+                # thread.join()
 
-                if client.state == smpplib.consts.SMPP_CLIENT_STATE_BOUND_TRX:
-                    # todo better way? maybe using resp
-                    print('Client bound as transceiver')
+                print("Back to main thread")
 
                 return Response({'isBound': True}, status=status.HTTP_200_OK)
             else:

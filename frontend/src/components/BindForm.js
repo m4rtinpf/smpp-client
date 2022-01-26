@@ -30,11 +30,28 @@ export default function BindForm(props) {
         fetch('/api/bind', requestOptions)
             .then((response) => response.json())
             .then((data) => {
-                // console.log(data);
-
+                console.log(data);
+                props.handleBound(data);
             });
-        // this.props.handleBound();
     };
+
+    const isValidHostname = (string) => {
+        let url;
+        let regex = /^\w+:\/\//;
+
+        try {
+            console.log(!regex.test(string));
+
+            if (!regex.test(string)) {
+                string = `http://${string}`;
+            }
+            url = new URL(string);
+        } catch (_) {
+            return false;
+        }
+
+        return true;
+    }
 
     return (
         <React.Fragment>
@@ -78,10 +95,12 @@ export default function BindForm(props) {
                             size="small"
                             {...register("hostname", {
                                 required: true,
+                                validate: isValidHostname,
                             })}
                             helperText={
                                 {
                                     required: "Required",
+                                    validate: "Invalid hostname",
                                 }
                                 [errors?.hostname?.type]
                             }
@@ -235,14 +254,15 @@ export default function BindForm(props) {
 
                             <Button
                                 variant="contained"
-                                sx={{ m: 1 }}
+                                sx={{
+                                    m: 1,
+                                    // todo is there something wrong with `ch`? it should be `10ch`
+                                    minWidth: '14ch',
+                                }}
                                 size="small"
                                 type="submit"
                             >
-                                Connect
-                            </Button>
-                            <Button variant="contained" sx={{ m: 1 }} size="small">
-                                Disconnect
+                                {{ false: "Connect", true: 'Disconnect' }[props.isBound]}
                             </Button>
                         </Box>
                     </Grid>
