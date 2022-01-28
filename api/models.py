@@ -10,8 +10,6 @@ class ClientModel(models.Model):
     port = models.IntegerField()
     systemType = models.CharField(max_length=FIELDS_CONSTRAINTS['max_system_type_length'])
     useSSL = models.BooleanField()
-    addrTON = models.IntegerField()
-    addrNPI = models.IntegerField()
     reconnect = models.BooleanField()
     isDone = models.BooleanField(blank=False, default=False)
     isBound = models.BooleanField(blank=False, default=False)

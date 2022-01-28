@@ -14,8 +14,6 @@ class ClientResponseSerializer(serializers.ModelSerializer):
             'port',
             'systemType',
             'useSSL',
-            'addrTON',
-            'addrNPI',
             'reconnect',
             'isDone',
             'isBound',
@@ -32,8 +30,6 @@ class ClientRequestSerializer(serializers.ModelSerializer):
             'port',
             'systemType',
             'useSSL',
-            'addrTON',
-            'addrNPI',
             'reconnect',
         )
 

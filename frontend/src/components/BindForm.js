@@ -8,10 +8,6 @@ const DEFAULT_PORT = 2775;
 const MAX_SYSTEM_ID_LENGTH = 16;
 const MAX_PASSWORD_LENGTH = 9;
 const MAX_SYSTEM_TYPE_LENGTH = 13;
-const DEFAULT_ADDR_TON = 0;
-const MAX_ADDR_TON_LENGTH = 1;
-const DEFAULT_ADDR_NPI = 0;
-const MAX_ADDR_NPI_LENGTH = 1;
 
 export default function BindForm(props) {
     const {
@@ -182,52 +178,6 @@ export default function BindForm(props) {
                             control={<Switch size="small" />}
                             label="Use SSL"
                             {...register("useSSL")}
-                        />
-                    </Grid>
-
-                    <Grid item xs={6}>
-                        <TextField
-                            id="addr-ton"
-                            label="Addr_TON *"
-                            type="number"
-                            fullWidth={true}
-                            size="small"
-                            defaultValue={DEFAULT_ADDR_TON}
-                            {...register("addrTON", {
-                                required: true,
-                                maxLength: MAX_ADDR_TON_LENGTH,
-                            })}
-                            helperText={
-                                {
-                                    required: "Required",
-                                    maxLength: "Max " + MAX_ADDR_TON_LENGTH + " octets",
-                                }
-                                [errors?.addrTON?.type]
-                            }
-                            error={errors?.addrTON?.type !== undefined}
-                        />
-                    </Grid>
-
-                    <Grid item xs={6}>
-                        <TextField
-                            id="addr-npi"
-                            label="Addr_NPI *"
-                            type="number"
-                            fullWidth={true}
-                            size="small"
-                            defaultValue={DEFAULT_ADDR_NPI}
-                            {...register("addrNPI", {
-                                required: true,
-                                maxLength: MAX_ADDR_NPI_LENGTH,
-                            })}
-                            helperText={
-                                {
-                                    required: "Required",
-                                    maxLength: "Max " + MAX_ADDR_NPI_LENGTH + " octets",
-                                }
-                                [errors?.addrNPI?.type]
-                            }
-                            error={errors?.addrNPI?.type !== undefined}
                         />
                     </Grid>
 

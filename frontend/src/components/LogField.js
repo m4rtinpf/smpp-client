@@ -18,7 +18,7 @@ export default function LogComponent() {
                             label="Log"
                             multiline
                             fullWidth={true}
-                            maxRows={4}
+                            maxRows={7}
                             InputProps={{
                                 readOnly: true,
                             }}

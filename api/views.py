@@ -32,8 +32,6 @@ class ClientView(APIView):
             port=client_instance.port,
             system_type=client_instance.systemType,
             use_ssl=client_instance.useSSL,
-            addr_ton=client_instance.addrTON,
-            addr_npi=client_instance.addrNPI,
             reconnect=client_instance.reconnect,
             session_id=client_instance.sessionId,
             command='bind',
@@ -57,8 +55,6 @@ class ClientView(APIView):
             port = request_serializer.data.get('port')
             system_type = request_serializer.data.get('systemType')
             use_ssl = request_serializer.data.get('useSSL')
-            addr_ton = request_serializer.data.get('addrTON')
-            addr_npi = request_serializer.data.get('addrTON')
             reconnect = request_serializer.data.get('reconnect')
 
             session_id = self.request.session.session_key
@@ -72,8 +68,6 @@ class ClientView(APIView):
                 client_instance.port = port
                 client_instance.systemType = system_type
                 client_instance.useSSL = use_ssl
-                client_instance.addrTON = addr_ton
-                client_instance.addrNPI = addr_npi
                 client_instance.reconnect = reconnect
 
                 client_instance.save(update_fields=[
@@ -83,8 +77,6 @@ class ClientView(APIView):
                     'port',
                     'systemType',
                     'useSSL',
-                    'addrTON',
-                    'addrNPI',
                     'reconnect',
                 ])
                 print(ClientResponseSerializer(client_instance).data)
@@ -104,8 +96,6 @@ class ClientView(APIView):
                     port=port,
                     systemType=system_type,
                     useSSL=use_ssl,
-                    addrTON=addr_ton,
-                    addrNPI=addr_npi,
                     reconnect=reconnect,
                 )
                 client_instance.save()

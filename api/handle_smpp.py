@@ -11,8 +11,7 @@ from .models import ClientModel, MessageModel
 
 class TxThread(threading.Thread):
     def __init__(
-            self, system_id, hostname, password, port, system_type, use_ssl, addr_ton, addr_npi, reconnect, session_id,
-            command, event,
+            self, system_id, hostname, password, port, system_type, use_ssl, reconnect, session_id, command, event,
     ):
         threading.Thread.__init__(self)
 
@@ -22,8 +21,6 @@ class TxThread(threading.Thread):
         self.port = port
         self.system_type = system_type
         self.use_ssl = use_ssl
-        self.addr_ton = addr_ton
-        self.addr_npi = addr_npi
         self.reconnect = reconnect
         self.session_id = session_id
         self.command = command
