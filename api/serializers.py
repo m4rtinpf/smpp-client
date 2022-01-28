@@ -1,13 +1,12 @@
 from rest_framework import serializers
-from .models import Bind, Message
+from .models import ClientModel, MessageModel
 
 
-class BindSerializer(serializers.ModelSerializer):
+class ClientResponseSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Bind
+        model = ClientModel
         fields = (
             'id',
-            'host',
             'sessionId',
             'systemId',
             'hostname',
@@ -15,15 +14,15 @@ class BindSerializer(serializers.ModelSerializer):
             'port',
             'systemType',
             'useSSL',
-            'addrTON',
-            'addrNPI',
             'reconnect',
+            'isDone',
+            'isBound',
         )
 
 
-class CreateBindingSerializer(serializers.ModelSerializer):
+class ClientRequestSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Bind
+        model = ClientModel
         fields = (
             'systemId',
             'hostname',
@@ -31,19 +30,18 @@ class CreateBindingSerializer(serializers.ModelSerializer):
             'port',
             'systemType',
             'useSSL',
-            'addrTON',
-            'addrNPI',
             'reconnect',
         )
 
 
 class MessageSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Message
+        model = MessageModel
         fields = (
             'id',
-            'host',
-            'sessionId',
+            # 'host',
+            # 'sessionId',
+            'client',
             'messageText',
             'sourceAddr',
             'sourceAddrTON',
@@ -61,7 +59,7 @@ class MessageSerializer(serializers.ModelSerializer):
 
 class CreateMessageSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Message
+        model = MessageModel
         fields = (
             'messageText',
             'sourceAddr',

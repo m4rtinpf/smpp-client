@@ -8,10 +8,6 @@ const DEFAULT_PORT = 2775;
 const MAX_SYSTEM_ID_LENGTH = 16;
 const MAX_PASSWORD_LENGTH = 9;
 const MAX_SYSTEM_TYPE_LENGTH = 13;
-const DEFAULT_ADDR_TON = 0;
-const MAX_ADDR_TON_LENGTH = 1;
-const DEFAULT_ADDR_NPI = 0;
-const MAX_ADDR_NPI_LENGTH = 1;
 
 export default function BindForm(props) {
     const {
@@ -30,11 +26,28 @@ export default function BindForm(props) {
         fetch('/api/bind', requestOptions)
             .then((response) => response.json())
             .then((data) => {
-                // console.log(data);
-
+                console.log(data);
+                props.handleBound(data);
             });
-        // this.props.handleBound();
     };
+
+    const isValidHostname = (string) => {
+        let url;
+        let regex = /^\w+:\/\//;
+
+        try {
+            console.log(!regex.test(string));
+
+            if (!regex.test(string)) {
+                string = `http://${string}`;
+            }
+            url = new URL(string);
+        } catch (_) {
+            return false;
+        }
+
+        return true;
+    }
 
     return (
         <React.Fragment>
@@ -78,10 +91,12 @@ export default function BindForm(props) {
                             size="small"
                             {...register("hostname", {
                                 required: true,
+                                validate: isValidHostname,
                             })}
                             helperText={
                                 {
                                     required: "Required",
+                                    validate: "Invalid hostname",
                                 }
                                 [errors?.hostname?.type]
                             }
@@ -166,52 +181,6 @@ export default function BindForm(props) {
                         />
                     </Grid>
 
-                    <Grid item xs={6}>
-                        <TextField
-                            id="addr-ton"
-                            label="Addr_TON *"
-                            type="number"
-                            fullWidth={true}
-                            size="small"
-                            defaultValue={DEFAULT_ADDR_TON}
-                            {...register("addrTON", {
-                                required: true,
-                                maxLength: MAX_ADDR_TON_LENGTH,
-                            })}
-                            helperText={
-                                {
-                                    required: "Required",
-                                    maxLength: "Max " + MAX_ADDR_TON_LENGTH + " octets",
-                                }
-                                [errors?.addrTON?.type]
-                            }
-                            error={errors?.addrTON?.type !== undefined}
-                        />
-                    </Grid>
-
-                    <Grid item xs={6}>
-                        <TextField
-                            id="addr-npi"
-                            label="Addr_NPI *"
-                            type="number"
-                            fullWidth={true}
-                            size="small"
-                            defaultValue={DEFAULT_ADDR_NPI}
-                            {...register("addrNPI", {
-                                required: true,
-                                maxLength: MAX_ADDR_NPI_LENGTH,
-                            })}
-                            helperText={
-                                {
-                                    required: "Required",
-                                    maxLength: "Max " + MAX_ADDR_NPI_LENGTH + " octets",
-                                }
-                                [errors?.addrNPI?.type]
-                            }
-                            error={errors?.addrNPI?.type !== undefined}
-                        />
-                    </Grid>
-
                     <Grid item xs={12}>
                         <Divider variant="middle" />
                     </Grid>
@@ -235,14 +204,15 @@ export default function BindForm(props) {
 
                             <Button
                                 variant="contained"
-                                sx={{ m: 1 }}
+                                sx={{
+                                    m: 1,
+                                    // todo is there something wrong with `ch`? it should be `10ch`
+                                    minWidth: '14ch',
+                                }}
                                 size="small"
                                 type="submit"
                             >
-                                Connect
-                            </Button>
-                            <Button variant="contained" sx={{ m: 1 }} size="small">
-                                Disconnect
+                                {{ false: "Connect", true: 'Disconnect' }[props.isBound]}
                             </Button>
                         </Box>
                     </Grid>

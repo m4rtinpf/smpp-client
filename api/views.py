@@ -1,116 +1,113 @@
+import threading
+
 from django.shortcuts import render
 from rest_framework import generics, status
-from .serializers import BindSerializer, CreateBindingSerializer, MessageSerializer, CreateMessageSerializer
-from .models import Bind, Message
+from .serializers import ClientResponseSerializer, ClientRequestSerializer, MessageSerializer, CreateMessageSerializer
+from .models import ClientModel, MessageModel
 from rest_framework.views import APIView
 from rest_framework.response import Response
-
-import logging
-import sys
-
-import smpplib.gsm
-import smpplib.client
-import smpplib.consts
+from .handle_smpp import TxThread
 
 
 class BindView(generics.ListAPIView):
-    queryset = Bind.objects.all()
-    serializer_class = BindSerializer
+    queryset = ClientModel.objects.all()
+    serializer_class = ClientResponseSerializer
 
 
-class CreateBindingView(APIView):
-    serializer_class = CreateBindingSerializer
+class ClientView(APIView):
+    request_serializer_class = ClientRequestSerializer
+
+    @staticmethod
+    def bind_client(client_instance):
+        evt = threading.Event()
+
+        # todo remove
+        client_instance.isBound = False
+        client_instance.save()
+
+        tx_thread = TxThread(
+            system_id=client_instance.systemId,
+            hostname=client_instance.hostname,
+            password=client_instance.password,
+            port=client_instance.port,
+            system_type=client_instance.systemType,
+            use_ssl=client_instance.useSSL,
+            reconnect=client_instance.reconnect,
+            session_id=client_instance.sessionId,
+            command='bind',
+            event=evt,
+        )
+
+        tx_thread.start()
+
+        # Wait for tx_thread to finish setting up the binding
+        evt.wait()
 
     def post(self, request):
         if not self.request.session.exists(self.request.session.session_key):
             self.request.session.create()
 
-        serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            system_id = serializer.data.get('systemId')
-            hostname = serializer.data.get('hostname')
-            password = serializer.data.get('password')
-            port = serializer.data.get('port')
-            system_type = serializer.data.get('systemType')
-            use_ssl = serializer.data.get('useSSL')
-            addr_ton = serializer.data.get('addrTON')
-            addr_npi = serializer.data.get('addrTON')
-            reconnect = serializer.data.get('reconnect')
+        request_serializer = self.request_serializer_class(data=request.data)
+        if request_serializer.is_valid():
+            system_id = request_serializer.data.get('systemId')
+            hostname = request_serializer.data.get('hostname')
+            password = request_serializer.data.get('password')
+            port = request_serializer.data.get('port')
+            system_type = request_serializer.data.get('systemType')
+            use_ssl = request_serializer.data.get('useSSL')
+            reconnect = request_serializer.data.get('reconnect')
 
-            host = self.request.session.session_key
+            session_id = self.request.session.session_key
 
-            queryset = Bind.objects.filter(host=host)
+            queryset = ClientModel.objects.filter(sessionId=session_id)
             if queryset.exists():
-                bind = queryset[0]
-                bind.systemId = system_id
-                bind.hostname = hostname
-                bind.password = password
-                bind.port = port
-                bind.systemType = system_type
-                bind.useSSL = use_ssl
-                bind.addrTON = addr_ton
-                bind.addrNPI = addr_npi
-                bind.reconnect = reconnect
+                client_instance = queryset[0]
+                client_instance.systemId = system_id
+                client_instance.hostname = hostname
+                client_instance.password = password
+                client_instance.port = port
+                client_instance.systemType = system_type
+                client_instance.useSSL = use_ssl
+                client_instance.reconnect = reconnect
 
-                bind.save(update_fields=[
+                client_instance.save(update_fields=[
                     'systemId',
                     'hostname',
                     'password',
                     'port',
                     'systemType',
                     'useSSL',
-                    'addrTON',
-                    'addrNPI',
                     'reconnect',
                 ])
-                print(BindSerializer(bind).data)
+                print(ClientResponseSerializer(client_instance).data)
 
-                # if you want to know what's happening
-                logging.basicConfig(level='DEBUG')
+                self.bind_client(client_instance)
+                client_instance.refresh_from_db()
 
-                client = smpplib.client.Client(
-                    host=bind.hostname,
-                    port=bind.port,
-                    allow_unknown_opt_params=True,
-                )
+                print(f"Client is bound = {client_instance.isBound}")
 
-                # Print when obtain message_id
-                client.set_message_sent_handler(
-                    lambda pdu: sys.stdout.write('sent {} {}\n'.format(pdu.sequence, pdu.message_id)))
-                client.set_message_received_handler(
-                    lambda pdu: sys.stdout.write('delivered {}\n'.format(pdu.receipted_message_id)))
-
-                client.connect()
-                resp = client.bind_transceiver(
-                    system_id=bind.systemId,
-                    password=bind.password,
-                )
-
-                print(f"Some text: {client.state}")
-
-                if client.state == smpplib.consts.SMPP_CLIENT_STATE_BOUND_TRX:
-                    # todo better way? maybe using resp
-                    print('Client bound as transceiver')
-
-                return Response({'isBound': True}, status=status.HTTP_200_OK)
+                return Response({'isBound': client_instance.isBound}, status=status.HTTP_200_OK)
             else:
-                bind = Bind(
-                    host=host,
+                client_instance = ClientModel(
+                    sessionId=session_id,
                     systemId=system_id,
                     hostname=hostname,
                     password=password,
                     port=port,
                     systemType=system_type,
                     useSSL=use_ssl,
-                    addrTON=addr_ton,
-                    addrNPI=addr_npi,
                     reconnect=reconnect,
                 )
-                bind.save()
+                client_instance.save()
 
-                print(BindSerializer(bind).data)
+                print(ClientResponseSerializer(client_instance).data)
 
-                return Response(BindSerializer(bind).data, status=status.HTTP_201_CREATED)
+                self.bind_client(client_instance)
+                client_instance.refresh_from_db()
+
+                print(f"Client is bound = {client_instance.isBound}")
+
+                return Response({'isBound': client_instance.isBound}, status=status.HTTP_201_CREATED)
 
         return Response({"Bad Request": "Invalid data..."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -137,61 +134,62 @@ class CreateMessageView(APIView):
             data_coding = serializer.data.get('dataCoding')
             submit_mode = serializer.data.get('submitMode')
 
-            host = self.request.session.session_key
+            session_id = self.request.session.session_key
 
-            queryset = Message.objects.filter(host=host)
-            if queryset.exists():
-                message = queryset[0]
-                message.messageText = message_text
-                message.sourceAddr = source_addr
-                message.sourceAddrTON = source_addr_ton
-                message.sourceAddrNPI = source_addr_npi
-                message.destAddr = dest_addr
-                message.destAddrTON = dest_addr_ton
-                message.destAddrNPI = dest_addr_npi
-                message.serviceType = service_type
-                message.bulkSubmitEnable = bulk_submit_enable
-                message.bulkSubmitTimes = bulk_submit_times
-                message.dataCoding = data_coding
-                message.submitMode = submit_mode
+            # queryset = MessageModel.objects.filter(client=session_id)
+            # if queryset.exists():
+            #     message = queryset[0]
+            #     message.messageText = message_text
+            #     message.sourceAddr = source_addr
+            #     message.sourceAddrTON = source_addr_ton
+            #     message.sourceAddrNPI = source_addr_npi
+            #     message.destAddr = dest_addr
+            #     message.destAddrTON = dest_addr_ton
+            #     message.destAddrNPI = dest_addr_npi
+            #     message.serviceType = service_type
+            #     message.bulkSubmitEnable = bulk_submit_enable
+            #     message.bulkSubmitTimes = bulk_submit_times
+            #     message.dataCoding = data_coding
+            #     message.submitMode = submit_mode
+            #
+            #     message.save(update_fields=[
+            #         'messageText',
+            #         'sourceAddr',
+            #         'sourceAddrTON',
+            #         'sourceAddrNPI',
+            #         'destAddr',
+            #         'destAddrTON',
+            #         'destAddrNPI',
+            #         'serviceType',
+            #         'bulkSubmitEnable',
+            #         'bulkSubmitTimes',
+            #         'dataCoding',
+            #         'submitMode',
+            #     ])
+            #     print(MessageSerializer(message).data)
+            #
+            #     return Response(MessageSerializer(message).data, status=status.HTTP_200_OK)
+            # else:
+            message = MessageModel(
+                client=ClientModel.objects.filter(sessionId=session_id)[0],
+                # todo check that the client_instance exists
+                messageText=message_text,
+                sourceAddr=source_addr,
+                sourceAddrTON=source_addr_ton,
+                sourceAddrNPI=source_addr_npi,
+                destAddr=dest_addr,
+                destAddrTON=dest_addr_ton,
+                destAddrNPI=dest_addr_npi,
+                serviceType=service_type,
+                bulkSubmitEnable=bulk_submit_enable,
+                bulkSubmitTimes=bulk_submit_times,
+                dataCoding=data_coding,
+                submitMode=submit_mode,
+            )
+            message.save()
 
-                message.save(update_fields=[
-                    'messageText',
-                    'sourceAddr',
-                    'sourceAddrTON',
-                    'sourceAddrNPI',
-                    'destAddr',
-                    'destAddrTON',
-                    'destAddrNPI',
-                    'serviceType',
-                    'bulkSubmitEnable',
-                    'bulkSubmitTimes',
-                    'dataCoding',
-                    'submitMode',
-                ])
-                print(MessageSerializer(message).data)
+            # print(MessageSerializer(message).data)
 
-                return Response(MessageSerializer(message).data, status=status.HTTP_200_OK)
-            else:
-                message = Message(
-                    host=host,
-                    messageText=message_text,
-                    sourceAddr=source_addr,
-                    sourceAddrTON=source_addr_ton,
-                    sourceAddrNPI=source_addr_npi,
-                    destAddr=dest_addr,
-                    destAddrTON=dest_addr_ton,
-                    destAddrNPI=dest_addr_npi,
-                    serviceType=service_type,
-                    bulkSubmitEnable=bulk_submit_enable,
-                    bulkSubmitTimes=bulk_submit_times,
-                    dataCoding=data_coding,
-                    submitMode=submit_mode,
-                )
-                message.save()
-
-                print(MessageSerializer(message).data)
-
-                return Response(MessageSerializer(message).data, status=status.HTTP_201_CREATED)
+            return Response(MessageSerializer(message).data, status=status.HTTP_201_CREATED)
 
         return Response({"Bad Request": "Invalid data..."}, status=status.HTTP_400_BAD_REQUEST)
