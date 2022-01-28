@@ -11,10 +11,11 @@ import smpplib.consts
 from .models import ClientModel, MessageModel
 
 
-class MyThread(threading.Thread):
-    def __init__(self, system_id, hostname, password, port, system_type, use_ssl, addr_ton, addr_npi, reconnect,
-                 session_id,
-                 command):
+class TxThread(threading.Thread):
+    def __init__(
+            self, system_id, hostname, password, port, system_type, use_ssl, addr_ton, addr_npi, reconnect, session_id,
+            command, event,
+    ):
         threading.Thread.__init__(self)
 
         self.system_id = system_id
@@ -28,6 +29,7 @@ class MyThread(threading.Thread):
         self.reconnect = reconnect
         self.session_id = session_id
         self.command = command
+        self.event = event
 
         self.client_instance = ClientModel.objects.get(sessionId=session_id)
 
@@ -63,11 +65,10 @@ class MyThread(threading.Thread):
 
             self.client_instance.isBound = True
             self.client_instance.save()
-            print(f'state {smpplib_client.state}')
+            self.event.set()
 
-            # t = threading.Thread(target=smpplib_client.listen())
-            t = MyThread2(smpplib_client)
-            t.start()
+            rx_thread = RxThread(smpplib_client)
+            rx_thread.start()
 
         # Create a queue
         q = Queue()
@@ -79,6 +80,7 @@ class MyThread(threading.Thread):
         #     pass
 
         while not self.client_instance.isDone:
+            # .save() and .refresh_from_db() ?
             queryset = MessageModel.objects.filter(client=self.client_instance)
             if queryset.exists():
                 for message in queryset:
@@ -129,7 +131,7 @@ class MyThread(threading.Thread):
     # print(self.client_instance.isDone)
 
 
-class MyThread2(threading.Thread):
+class RxThread(threading.Thread):
     def __init__(self, smpplib_client):
         threading.Thread.__init__(self)
         self.smpplib_client = smpplib_client

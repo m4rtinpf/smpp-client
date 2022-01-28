@@ -1,3 +1,5 @@
+import threading
+
 from django.shortcuts import render
 from rest_framework import generics, status
 from .serializers import BindSerializer, CreateBindingSerializer, MessageSerializer, CreateMessageSerializer
@@ -5,7 +7,7 @@ from .models import ClientModel, MessageModel
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from .handle_smpp import MyThread
+from .handle_smpp import TxThread
 
 from queue import Queue
 
@@ -64,42 +66,33 @@ class CreateBindingView(APIView):
                 ])
                 print(BindSerializer(client_instance).data)
 
+                evt = threading.Event()
 
+                # todo remove
+                client_instance.isBound = False
+                client_instance.save()
 
                 # Create a new thread
-                thread = MyThread(system_id=client_instance.systemId, hostname=client_instance.hostname,
-                                  password=client_instance.password,
-                                  port=client_instance.port, system_type=client_instance.systemType,
-                                  use_ssl=client_instance.useSSL,
-                                  addr_ton=client_instance.addrTON, addr_npi=client_instance.addrNPI,
-                                  reconnect=client_instance.reconnect,
-                                   command='bind',
-                                  session_id=client_instance.sessionId)
+                tx_thread = TxThread(system_id=client_instance.systemId,
+                                     hostname=client_instance.hostname,
+                                     password=client_instance.password,
+                                     port=client_instance.port,
+                                     system_type=client_instance.systemType,
+                                     use_ssl=client_instance.useSSL,
+                                     addr_ton=client_instance.addrTON,
+                                     addr_npi=client_instance.addrNPI,
+                                     reconnect=client_instance.reconnect,
+                                     command='bind',
+                                     event=evt,
+                                     session_id=client_instance.sessionId)
 
                 # Start the thread
-                thread.start()
-                # thread.join()
+                tx_thread.start()
 
-                # print(thread.queue.queue)
+                evt.wait()
+                client_instance.refresh_from_db()
 
-                # thread.queue.put('bind')
-
-                # print(thread.queue.queue)
-
-                # todo FIX THIS! Queue.task_done() ?
-                import time
-                while not client_instance.isBound:
-                    print(f"Bound? {client_instance.isBound}")
-                    print('Waiting...')
-                    time.sleep(0.5)
-
-                print(f"some dict: {client_instance.isBound}")
-                #
-                # if some_dict['state'] == smpplib.consts.SMPP_CLIENT_STATE_BOUND_TRX:
-                #     bound_state = True
-                # else:
-                #     bound_state = False
-                #
+                print(f"Client is bound = {client_instance.isBound}")
                 print("Back to main thread")
 
                 return Response({'isBound': client_instance.isBound}, status=status.HTTP_200_OK)
@@ -184,7 +177,8 @@ class CreateMessageView(APIView):
             #     return Response(MessageSerializer(message).data, status=status.HTTP_200_OK)
             # else:
             message = MessageModel(
-                client=ClientModel.objects.filter(sessionId=session_id)[0], # todo check that the client_instance exists
+                client=ClientModel.objects.filter(sessionId=session_id)[0],
+                # todo check that the client_instance exists
                 messageText=message_text,
                 sourceAddr=source_addr,
                 sourceAddrTON=source_addr_ton,
