@@ -2,12 +2,11 @@ from rest_framework import serializers
 from .models import ClientModel, MessageModel
 
 
-class BindSerializer(serializers.ModelSerializer):
+class ClientResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClientModel
         fields = (
             'id',
-            # 'host',
             'sessionId',
             'systemId',
             'hostname',
@@ -18,10 +17,12 @@ class BindSerializer(serializers.ModelSerializer):
             'addrTON',
             'addrNPI',
             'reconnect',
+            'isDone',
+            'isBound',
         )
 
 
-class CreateBindingSerializer(serializers.ModelSerializer):
+class ClientRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClientModel
         fields = (

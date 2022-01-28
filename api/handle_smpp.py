@@ -3,11 +3,9 @@ import threading
 import logging
 import sys
 from queue import Queue
-
 import smpplib.gsm
 import smpplib.client
 import smpplib.consts
-
 from .models import ClientModel, MessageModel
 
 
@@ -34,10 +32,11 @@ class TxThread(threading.Thread):
         self.client_instance = ClientModel.objects.get(sessionId=session_id)
 
     def run(self):
-        print(
-            f"Starting thread {threading.currentThread().getName()} for client with session id {self.session_id} \n")
         # if you want to know what's happening
-        # logging.basicConfig(level='DEBUG')
+        logging.basicConfig(
+            level='DEBUG',
+            format='%(asctime)s %(levelname)s %(module)s - %(funcName)s: %(message)s',
+        )
 
         smpplib_client = smpplib.client.Client(
             host=self.hostname,
@@ -52,15 +51,13 @@ class TxThread(threading.Thread):
             lambda pdu: sys.stdout.write('delivered {}\n'.format(pdu.receipted_message_id)))
 
         smpplib_client.connect()
+
         resp = smpplib_client.bind_transceiver(
             system_id=self.system_id,
             password=self.password,
         )
 
-        print(f"Client state: {smpplib_client.state}")
-
         if smpplib_client.state == smpplib.consts.SMPP_CLIENT_STATE_BOUND_TRX:
-            # todo better way? maybe using resp
             print('Client bound as transceiver')
 
             self.client_instance.isBound = True
@@ -72,12 +69,6 @@ class TxThread(threading.Thread):
 
         # Create a queue
         q = Queue()
-
-        # try:
-
-        # for message
-        # except:
-        #     pass
 
         while not self.client_instance.isDone:
             # .save() and .refresh_from_db() ?
@@ -107,7 +98,7 @@ class TxThread(threading.Thread):
 
                             dest_addr_ton=message.destAddrTON,
                             dest_addr_npi=message.destAddrNPI,
-                            # Make sure thease two params are byte strings, not unicode:
+                            # Make sure these two params are byte strings, not unicode:
                             destination_addr=message.destAddr,
                             short_message=part,
 
@@ -118,7 +109,6 @@ class TxThread(threading.Thread):
                         print(pdu.sequence)
 
                     print("+++++++++++++Finish send++++++++++++++")
-
 
             except queue.Empty:
                 pass
