@@ -30,10 +30,10 @@ class TxThread(threading.Thread):
 
     def run(self):
         # if you want to know what's happening
-        logging.basicConfig(
-            level='DEBUG',
-            format='%(asctime)s %(levelname)s %(module)s - %(funcName)s: %(message)s',
-        )
+        # logging.basicConfig(
+        #     level='DEBUG',
+        #     format='%(asctime)s %(levelname)s %(module)s - %(funcName)s: %(message)s',
+        # )
 
         smpplib_client = smpplib.client.Client(
             host=self.hostname,
@@ -124,4 +124,12 @@ class RxThread(threading.Thread):
         self.smpplib_client = smpplib_client
 
     def run(self):
+        from django_eventstream import send_event
+        for i in range(10):
+            import uuid
+
+            my_message = uuid.uuid4()
+            print(f'sending SSE message {my_message}')
+
+            send_event('test', 'message', {'text': f'{my_message}'})
         self.smpplib_client.listen()

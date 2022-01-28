@@ -900,7 +900,7 @@
     "@babel/plugin-transform-react-jsx-development" "^7.16.7"
     "@babel/plugin-transform-react-pure-annotations" "^7.16.7"
 
-"@babel/runtime@^7.13.10", "@babel/runtime@^7.16.7", "@babel/runtime@^7.5.5", "@babel/runtime@^7.7.2", "@babel/runtime@^7.7.6", "@babel/runtime@^7.8.4", "@babel/runtime@^7.8.7":
+"@babel/runtime@^7.1.5", "@babel/runtime@^7.13.10", "@babel/runtime@^7.16.7", "@babel/runtime@^7.5.5", "@babel/runtime@^7.7.2", "@babel/runtime@^7.7.6", "@babel/runtime@^7.8.4", "@babel/runtime@^7.8.7":
   version "7.16.7"
   resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.16.7.tgz#03ff99f64106588c9c403c6ecb8c3bafbbdff1fa"
   integrity sha512-9E9FJowqAsytyOY6LG+1KuueckRL+aQW+mKvXRXnuFGyRAyepJPmEo9vgMfXUA6O9u3IeEdv9MAkppFcaQwogQ==
@@ -2155,6 +2155,13 @@ react-hook-form@^7.25.0:
   version "7.25.0"
   resolved "https://registry.yarnpkg.com/react-hook-form/-/react-hook-form-7.25.0.tgz#ffba58e5e14c8eeb81e2c43b741667552f11ae29"
   integrity sha512-MyF4YXegIT/vfyZloTm98mpJwLUPfULdX37yPzXeijT1hePCkV8DN1IAnEufxgtqCpc7aFGRinegQwisUGZCnA==
+
+react-hooks-sse@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/react-hooks-sse/-/react-hooks-sse-2.0.0.tgz#d42215b1a21542a820250a1c02e4538c3b67af96"
+  integrity sha512-Bv/KYK+QUVS6UWwCyx6nyaOYIvaTMTCjmlXuBK9nATH2DOz+g4PGiIxi5q71ljUTmSPn/q9Cod7xwDA3/gqVQA==
+  dependencies:
+    "@babel/runtime" "^7.1.5"
 
 react-is@^16.13.1, react-is@^16.7.0:
   version "16.13.1"
