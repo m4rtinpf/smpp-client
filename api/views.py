@@ -2,41 +2,64 @@ import threading
 
 from django.shortcuts import render
 from rest_framework import generics, status
-from .serializers import BindSerializer, CreateBindingSerializer, MessageSerializer, CreateMessageSerializer
+from .serializers import ClientResponseSerializer, ClientRequestSerializer, MessageSerializer, CreateMessageSerializer
 from .models import ClientModel, MessageModel
 from rest_framework.views import APIView
 from rest_framework.response import Response
-
 from .handle_smpp import TxThread
-
-from queue import Queue
-
-import smpplib.consts
 
 
 class BindView(generics.ListAPIView):
     queryset = ClientModel.objects.all()
-    serializer_class = BindSerializer
+    serializer_class = ClientResponseSerializer
 
 
-class CreateBindingView(APIView):
-    serializer_class = CreateBindingSerializer
+class ClientView(APIView):
+    request_serializer_class = ClientRequestSerializer
+
+    @staticmethod
+    def bind_client(client_instance):
+        evt = threading.Event()
+
+        # todo remove
+        client_instance.isBound = False
+        client_instance.save()
+
+        tx_thread = TxThread(
+            system_id=client_instance.systemId,
+            hostname=client_instance.hostname,
+            password=client_instance.password,
+            port=client_instance.port,
+            system_type=client_instance.systemType,
+            use_ssl=client_instance.useSSL,
+            addr_ton=client_instance.addrTON,
+            addr_npi=client_instance.addrNPI,
+            reconnect=client_instance.reconnect,
+            session_id=client_instance.sessionId,
+            command='bind',
+            event=evt,
+        )
+
+        tx_thread.start()
+
+        # Wait for tx_thread to finish setting up the binding
+        evt.wait()
 
     def post(self, request):
         if not self.request.session.exists(self.request.session.session_key):
             self.request.session.create()
 
-        serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            system_id = serializer.data.get('systemId')
-            hostname = serializer.data.get('hostname')
-            password = serializer.data.get('password')
-            port = serializer.data.get('port')
-            system_type = serializer.data.get('systemType')
-            use_ssl = serializer.data.get('useSSL')
-            addr_ton = serializer.data.get('addrTON')
-            addr_npi = serializer.data.get('addrTON')
-            reconnect = serializer.data.get('reconnect')
+        request_serializer = self.request_serializer_class(data=request.data)
+        if request_serializer.is_valid():
+            system_id = request_serializer.data.get('systemId')
+            hostname = request_serializer.data.get('hostname')
+            password = request_serializer.data.get('password')
+            port = request_serializer.data.get('port')
+            system_type = request_serializer.data.get('systemType')
+            use_ssl = request_serializer.data.get('useSSL')
+            addr_ton = request_serializer.data.get('addrTON')
+            addr_npi = request_serializer.data.get('addrTON')
+            reconnect = request_serializer.data.get('reconnect')
 
             session_id = self.request.session.session_key
 
@@ -64,36 +87,12 @@ class CreateBindingView(APIView):
                     'addrNPI',
                     'reconnect',
                 ])
-                print(BindSerializer(client_instance).data)
+                print(ClientResponseSerializer(client_instance).data)
 
-                evt = threading.Event()
-
-                # todo remove
-                client_instance.isBound = False
-                client_instance.save()
-
-                # Create a new thread
-                tx_thread = TxThread(system_id=client_instance.systemId,
-                                     hostname=client_instance.hostname,
-                                     password=client_instance.password,
-                                     port=client_instance.port,
-                                     system_type=client_instance.systemType,
-                                     use_ssl=client_instance.useSSL,
-                                     addr_ton=client_instance.addrTON,
-                                     addr_npi=client_instance.addrNPI,
-                                     reconnect=client_instance.reconnect,
-                                     command='bind',
-                                     event=evt,
-                                     session_id=client_instance.sessionId)
-
-                # Start the thread
-                tx_thread.start()
-
-                evt.wait()
+                self.bind_client(client_instance)
                 client_instance.refresh_from_db()
 
                 print(f"Client is bound = {client_instance.isBound}")
-                print("Back to main thread")
 
                 return Response({'isBound': client_instance.isBound}, status=status.HTTP_200_OK)
             else:
@@ -111,9 +110,14 @@ class CreateBindingView(APIView):
                 )
                 client_instance.save()
 
-                print(BindSerializer(client_instance).data)
+                print(ClientResponseSerializer(client_instance).data)
 
-                return Response(BindSerializer(client_instance).data, status=status.HTTP_201_CREATED)
+                self.bind_client(client_instance)
+                client_instance.refresh_from_db()
+
+                print(f"Client is bound = {client_instance.isBound}")
+
+                return Response({'isBound': client_instance.isBound}, status=status.HTTP_201_CREATED)
 
         return Response({"Bad Request": "Invalid data..."}, status=status.HTTP_400_BAD_REQUEST)
 

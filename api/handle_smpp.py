@@ -3,11 +3,9 @@ import threading
 import logging
 import sys
 from queue import Queue
-
 import smpplib.gsm
 import smpplib.client
 import smpplib.consts
-
 from .models import ClientModel, MessageModel
 
 
@@ -34,8 +32,6 @@ class TxThread(threading.Thread):
         self.client_instance = ClientModel.objects.get(sessionId=session_id)
 
     def run(self):
-        print(
-            f"Starting thread {threading.currentThread().getName()} for client with session id {self.session_id} \n")
         # if you want to know what's happening
         # logging.basicConfig(level='DEBUG')
 
@@ -57,8 +53,6 @@ class TxThread(threading.Thread):
             password=self.password,
         )
 
-        print(f"Client state: {smpplib_client.state}")
-
         if smpplib_client.state == smpplib.consts.SMPP_CLIENT_STATE_BOUND_TRX:
             # todo better way? maybe using resp
             print('Client bound as transceiver')
@@ -72,12 +66,6 @@ class TxThread(threading.Thread):
 
         # Create a queue
         q = Queue()
-
-        # try:
-
-        # for message
-        # except:
-        #     pass
 
         while not self.client_instance.isDone:
             # .save() and .refresh_from_db() ?
@@ -107,7 +95,7 @@ class TxThread(threading.Thread):
 
                             dest_addr_ton=message.destAddrTON,
                             dest_addr_npi=message.destAddrNPI,
-                            # Make sure thease two params are byte strings, not unicode:
+                            # Make sure these two params are byte strings, not unicode:
                             destination_addr=message.destAddr,
                             short_message=part,
 
@@ -118,7 +106,6 @@ class TxThread(threading.Thread):
                         print(pdu.sequence)
 
                     print("+++++++++++++Finish send++++++++++++++")
-
 
             except queue.Empty:
                 pass
