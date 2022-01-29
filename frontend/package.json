@@ -24,5 +24,8 @@
     "react-router-dom": "^6.2.1",
     "webpack": "^5.67.0",
     "webpack-cli": "^4.9.2"
+  },
+  "dependencies": {
+    "react-hooks-sse": "^2.0.0"
   }
 }
