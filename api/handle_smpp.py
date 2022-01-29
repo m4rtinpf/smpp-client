@@ -7,6 +7,7 @@ import smpplib.gsm
 import smpplib.client
 import smpplib.consts
 from .models import ClientModel, MessageModel
+from django_eventstream import send_event
 
 
 class TxThread(threading.Thread):
@@ -29,17 +30,24 @@ class TxThread(threading.Thread):
         self.client_instance = ClientModel.objects.get(sessionId=session_id)
 
     def run(self):
-        # if you want to know what's happening
-        # logging.basicConfig(
-        #     level='DEBUG',
-        #     format='%(asctime)s %(levelname)s %(module)s - %(funcName)s: %(message)s',
-        # )
 
         smpplib_client = smpplib.client.Client(
             host=self.hostname,
             port=self.port,
             allow_unknown_opt_params=True,
+            logger_name='smpplib_logger',
         )
+
+        logging.basicConfig(
+            # level='DEBUG',
+            # format='%(asctime)s %(levelname)s %(module)s - %(funcName)s: %(message)s',
+        )
+
+        handler = LogHandler()
+        smpplib_logger = logging.getLogger('smpplib_logger')
+        smpplib_logger.addHandler(handler)
+        smpplib_logger.setLevel('DEBUG')
+        # smpplib_logger.propagate = False
 
         # Print when obtain message_id
         smpplib_client.set_message_sent_handler(
@@ -124,12 +132,18 @@ class RxThread(threading.Thread):
         self.smpplib_client = smpplib_client
 
     def run(self):
-        from django_eventstream import send_event
-        for i in range(10):
-            import uuid
+        # for i in range(10):
+        #     import uuid
+        #
+        #     my_message = uuid.uuid4()
+        #     print(f'sending SSE message {my_message}')
 
-            my_message = uuid.uuid4()
-            print(f'sending SSE message {my_message}')
-
-            send_event('test', 'message', {'text': f'{my_message}'})
+        # send_event('test', 'message', {'text': f'{my_message}'})
         self.smpplib_client.listen()
+
+
+class LogHandler(logging.Handler):
+    def emit(self, record):
+        log_entry = self.format(record)
+
+        return send_event('test', 'message', {'text': f'{log_entry}'})
