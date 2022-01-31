@@ -2,38 +2,38 @@ import threading
 
 from django.shortcuts import render
 from rest_framework import generics, status
-from .serializers import ClientResponseSerializer, ClientRequestSerializer, MessageSerializer, CreateMessageSerializer
-from .models import ClientModel, MessageModel
+from .serializers import UserResponseSerializer, UserRequestSerializer, MessageSerializer, CreateMessageSerializer
+from .models import UserModel, MessageModel
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .handle_smpp import TxThread
 
 
 class BindView(generics.ListAPIView):
-    queryset = ClientModel.objects.all()
-    serializer_class = ClientResponseSerializer
+    queryset = UserModel.objects.all()
+    serializer_class = UserResponseSerializer
 
 
-class ClientView(APIView):
-    request_serializer_class = ClientRequestSerializer
+class UserView(APIView):
+    request_serializer_class = UserRequestSerializer
 
     @staticmethod
-    def bind_client(client_instance):
+    def bind_user(user):
         evt = threading.Event()
 
         # todo remove
-        client_instance.isBound = False
-        client_instance.save()
+        user.isBound = False
+        user.save()
 
         tx_thread = TxThread(
-            system_id=client_instance.systemId,
-            hostname=client_instance.hostname,
-            password=client_instance.password,
-            port=client_instance.port,
-            system_type=client_instance.systemType,
-            use_ssl=client_instance.useSSL,
-            reconnect=client_instance.reconnect,
-            session_id=client_instance.sessionId,
+            system_id=user.systemId,
+            hostname=user.hostname,
+            password=user.password,
+            port=user.port,
+            system_type=user.systemType,
+            use_ssl=user.useSSL,
+            reconnect=user.reconnect,
+            session_id=user.sessionId,
             command='bind',
             event=evt,
         )
@@ -59,18 +59,18 @@ class ClientView(APIView):
 
             session_id = self.request.session.session_key
 
-            queryset = ClientModel.objects.filter(sessionId=session_id)
+            queryset = UserModel.objects.filter(sessionId=session_id)
             if queryset.exists():
-                client_instance = queryset[0]
-                client_instance.systemId = system_id
-                client_instance.hostname = hostname
-                client_instance.password = password
-                client_instance.port = port
-                client_instance.systemType = system_type
-                client_instance.useSSL = use_ssl
-                client_instance.reconnect = reconnect
+                user = queryset[0]
+                user.systemId = system_id
+                user.hostname = hostname
+                user.password = password
+                user.port = port
+                user.systemType = system_type
+                user.useSSL = use_ssl
+                user.reconnect = reconnect
 
-                client_instance.save(update_fields=[
+                user.save(update_fields=[
                     'systemId',
                     'hostname',
                     'password',
@@ -79,16 +79,16 @@ class ClientView(APIView):
                     'useSSL',
                     'reconnect',
                 ])
-                print(ClientResponseSerializer(client_instance).data)
+                print(UserResponseSerializer(user).data)
 
-                self.bind_client(client_instance)
-                client_instance.refresh_from_db()
+                self.bind_user(user)
+                user.refresh_from_db()
 
-                print(f"Client is bound = {client_instance.isBound}")
+                print(f"User is bound = {user.isBound}")
 
-                return Response({'isBound': client_instance.isBound}, status=status.HTTP_200_OK)
+                return Response({'isBound': user.isBound}, status=status.HTTP_200_OK)
             else:
-                client_instance = ClientModel(
+                user = UserModel(
                     sessionId=session_id,
                     systemId=system_id,
                     hostname=hostname,
@@ -98,16 +98,16 @@ class ClientView(APIView):
                     useSSL=use_ssl,
                     reconnect=reconnect,
                 )
-                client_instance.save()
+                user.save()
 
-                print(ClientResponseSerializer(client_instance).data)
+                print(UserResponseSerializer(user).data)
 
-                self.bind_client(client_instance)
-                client_instance.refresh_from_db()
+                self.bind_user(user)
+                user.refresh_from_db()
 
-                print(f"Client is bound = {client_instance.isBound}")
+                print(f"User is bound = {user.isBound}")
 
-                return Response({'isBound': client_instance.isBound}, status=status.HTTP_201_CREATED)
+                return Response({'isBound': user.isBound}, status=status.HTTP_201_CREATED)
 
         return Response({"Bad Request": "Invalid data..."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -136,7 +136,7 @@ class CreateMessageView(APIView):
 
             session_id = self.request.session.session_key
 
-            # queryset = MessageModel.objects.filter(client=session_id)
+            # queryset = MessageModel.objects.filter(user=session_id)
             # if queryset.exists():
             #     message = queryset[0]
             #     message.messageText = message_text
@@ -171,8 +171,8 @@ class CreateMessageView(APIView):
             #     return Response(MessageSerializer(message).data, status=status.HTTP_200_OK)
             # else:
             message = MessageModel(
-                client=ClientModel.objects.filter(sessionId=session_id)[0],
-                # todo check that the client_instance exists
+                user=UserModel.objects.filter(sessionId=session_id)[0],
+                # todo check that the user exists
                 messageText=message_text,
                 sourceAddr=source_addr,
                 sourceAddrTON=source_addr_ton,

@@ -1,10 +1,10 @@
 from rest_framework import serializers
-from .models import ClientModel, MessageModel
+from .models import UserModel, MessageModel
 
 
-class ClientResponseSerializer(serializers.ModelSerializer):
+class UserResponseSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ClientModel
+        model = UserModel
         fields = (
             'id',
             'sessionId',
@@ -20,9 +20,9 @@ class ClientResponseSerializer(serializers.ModelSerializer):
         )
 
 
-class ClientRequestSerializer(serializers.ModelSerializer):
+class UserRequestSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ClientModel
+        model = UserModel
         fields = (
             'systemId',
             'hostname',
@@ -41,7 +41,7 @@ class MessageSerializer(serializers.ModelSerializer):
             'id',
             # 'host',
             # 'sessionId',
-            'client',
+            'user',
             'messageText',
             'sourceAddr',
             'sourceAddrTON',

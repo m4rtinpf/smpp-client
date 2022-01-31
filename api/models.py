@@ -2,7 +2,7 @@ from django.db import models
 from .consts import FIELDS_CONSTRAINTS
 
 
-class ClientModel(models.Model):
+class UserModel(models.Model):
     sessionId = models.CharField(max_length=50, unique=True)
     systemId = models.CharField(max_length=FIELDS_CONSTRAINTS['max_system_id_length'])
     hostname = models.CharField(max_length=253)
@@ -16,7 +16,7 @@ class ClientModel(models.Model):
 
 
 class MessageModel(models.Model):
-    client = models.ForeignKey(ClientModel, on_delete=models.CASCADE)
+    user = models.ForeignKey(UserModel, on_delete=models.CASCADE)
     messageText = models.CharField(max_length=FIELDS_CONSTRAINTS['max_message_text_length'])
     sourceAddr = models.CharField(max_length=FIELDS_CONSTRAINTS['max_address_length'])
     sourceAddrTON = models.IntegerField()

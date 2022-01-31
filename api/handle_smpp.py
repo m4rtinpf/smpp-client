@@ -6,7 +6,7 @@ from queue import Queue
 import smpplib.gsm
 import smpplib.client
 import smpplib.consts
-from .models import ClientModel, MessageModel
+from .models import UserModel, MessageModel
 from django_eventstream import send_event
 
 
@@ -27,11 +27,11 @@ class TxThread(threading.Thread):
         self.command = command
         self.event = event
 
-        self.client_instance = ClientModel.objects.get(sessionId=session_id)
+        self.user = UserModel.objects.get(sessionId=session_id)
 
     def run(self):
 
-        smpplib_client = smpplib.client.Client(
+        client = smpplib.client.Client(
             host=self.hostname,
             port=self.port,
             allow_unknown_opt_params=True,
@@ -50,34 +50,34 @@ class TxThread(threading.Thread):
         # smpplib_logger.propagate = False
 
         # Print when obtain message_id
-        smpplib_client.set_message_sent_handler(
+        client.set_message_sent_handler(
             lambda pdu: sys.stdout.write('sent {} {}\n'.format(pdu.sequence, pdu.message_id)))
-        smpplib_client.set_message_received_handler(
+        client.set_message_received_handler(
             lambda pdu: sys.stdout.write('delivered {}\n'.format(pdu.receipted_message_id)))
 
-        smpplib_client.connect()
+        client.connect()
 
-        resp = smpplib_client.bind_transceiver(
+        resp = client.bind_transceiver(
             system_id=self.system_id,
             password=self.password,
         )
 
-        if smpplib_client.state == smpplib.consts.SMPP_CLIENT_STATE_BOUND_TRX:
+        if client.state == smpplib.consts.SMPP_CLIENT_STATE_BOUND_TRX:
             print('Client bound as transceiver')
 
-            self.client_instance.isBound = True
-            self.client_instance.save()
+            self.user.isBound = True
+            self.user.save()
             self.event.set()
 
-            rx_thread = RxThread(smpplib_client)
+            rx_thread = RxThread(client)
             rx_thread.start()
 
         # Create a queue
         q = Queue()
 
-        while not self.client_instance.isDone:
+        while not self.user.isDone:
             # .save() and .refresh_from_db() ?
-            queryset = MessageModel.objects.filter(client=self.client_instance)
+            queryset = MessageModel.objects.filter(client=self.user)
             if queryset.exists():
                 for message in queryset:
                     print(f"{message.messageText}")
@@ -95,7 +95,7 @@ class TxThread(threading.Thread):
                     parts, encoding_flag, msg_type_flag = smpplib.gsm.make_parts(message.messageText)
 
                     for part in parts:
-                        pdu = smpplib_client.send_message(
+                        pdu = client.send_message(
                             source_addr_ton=message.sourceAddrTON,
                             source_addr_npi=message.sourceAddrNPI,
                             # Make sure it is a byte string, not unicode:
@@ -120,16 +120,16 @@ class TxThread(threading.Thread):
                 # print('Empty queue')
 
         print(
-            f"Exiting thread {threading.currentThread().getName()} for client with session id {self.session_id} \n")
+            f"Exiting thread {threading.currentThread().getName()} for user with session id {self.session_id} \n")
 
     # else:
-    # print(self.client_instance.isDone)
+    # print(self.user.isDone)
 
 
 class RxThread(threading.Thread):
-    def __init__(self, smpplib_client):
+    def __init__(self, client):
         threading.Thread.__init__(self)
-        self.smpplib_client = smpplib_client
+        self.client = client
 
     def run(self):
         # for i in range(10):
@@ -139,7 +139,7 @@ class RxThread(threading.Thread):
         #     print(f'sending SSE message {my_message}')
 
         # send_event('test', 'message', {'text': f'{my_message}'})
-        self.smpplib_client.listen()
+        self.client.listen()
 
 
 class LogHandler(logging.Handler):
