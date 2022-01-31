@@ -43,6 +43,8 @@ class UserView(APIView):
         if not self.request.session.exists(self.request.session.session_key):
             self.request.session.create()
 
+        print(f'user request: {request.data}')
+
         request_serializer = self.request_serializer_class(data=request.data)
         if request_serializer.is_valid():
             system_id = request_serializer.data.get('systemId')
@@ -80,7 +82,7 @@ class UserView(APIView):
                 self.bind_user(user)
                 user.refresh_from_db()  # todo remove?
 
-                return Response({'test': 'some response'}, status=status.HTTP_200_OK)
+                return Response({}, status=status.HTTP_200_OK)
             else:
                 user = UserModel(
                     sessionId=session_id,
@@ -99,9 +101,9 @@ class UserView(APIView):
                 self.bind_user(user)
                 user.refresh_from_db()  # todo remove?
 
-                return Response({'test': 'other response'}, status=status.HTTP_201_CREATED)
+                return Response({}, status=status.HTTP_201_CREATED)
 
-        return Response({"Bad Request": "Invalid data..."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CreateMessageView(APIView):
@@ -184,4 +186,4 @@ class CreateMessageView(APIView):
 
             return Response(MessageSerializer(message).data, status=status.HTTP_201_CREATED)
 
-        return Response({"Bad Request": "Invalid data..."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({}, status=status.HTTP_400_BAD_REQUEST)

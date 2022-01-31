@@ -10,10 +10,6 @@ import { useSSE, SSEProvider } from 'react-hooks-sse';
 export default function App() {
   const [isBound, setIsBound] = useState(false);
 
-  // const handleBound = (data) => {
-  //   setIsBound(data['isBound']);
-  // }
-
   function GetIsBound() {
     // todo hacky
 
@@ -39,7 +35,6 @@ export default function App() {
       </SSEProvider>
 
       <BindForm
-        // handleBound={handleBound}
         isBound={isBound}
       />
 

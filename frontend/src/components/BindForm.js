@@ -17,17 +17,22 @@ export default function BindForm(props) {
         formState: { errors }
     } = useForm();
 
+    const connectDisconnect = { false: "Connect", true: 'Disconnect' }
+
     const onSubmit = (bindData) => {
+        bindData['command'] = connectDisconnect[props.isBound].toLowerCase();
+
         const requestOptions = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(bindData),
         };
+        console.log(bindData);
+
         fetch('/api/bind', requestOptions)
             .then((response) => response.json())
             .then((data) => {
                 console.log(data);
-                // props.handleBound(data);
             });
     };
 
@@ -36,8 +41,6 @@ export default function BindForm(props) {
         let regex = /^\w+:\/\//;
 
         try {
-            console.log(!regex.test(string));
-
             if (!regex.test(string)) {
                 string = `http://${string}`;
             }
@@ -212,7 +215,7 @@ export default function BindForm(props) {
                                 size="small"
                                 type="submit"
                             >
-                                {{ false: "Connect", true: 'Disconnect' }[props.isBound]}
+                                {connectDisconnect[props.isBound]}
                             </Button>
                         </Box>
                     </Grid>
