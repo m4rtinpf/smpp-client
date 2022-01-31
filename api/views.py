@@ -43,7 +43,6 @@ class UserView(APIView):
     def unbind_user(user):
         user.isDone = True
         user.save()
-        # pass
 
     def post(self, request):
         if not self.request.session.exists(self.request.session.session_key):

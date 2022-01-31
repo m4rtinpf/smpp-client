@@ -58,18 +58,25 @@ class TxThread(threading.Thread):
         client.set_message_received_handler(
             lambda pdu: sys.stdout.write('delivered {}\n'.format(pdu.receipted_message_id)))
 
-        client.connect()
-
-        resp = client.bind_transceiver(
-            system_id=self.system_id,
-            password=self.password,
-        )
-
-        if client.state == smpplib.consts.SMPP_CLIENT_STATE_BOUND_TRX:
+        try:
+            client.connect()
+        except smpplib.exceptions.ConnectionError as e:
+            smpplib_logger.error(e)
             self.event.set()
+            return
 
-            rx_thread = RxThread(client)
-            rx_thread.start()
+        try:
+            resp = client.bind_transceiver(
+                system_id=self.system_id,
+                password=self.password,
+            )
+        except (smpplib.exceptions.ConnectionError, smpplib.exceptions.PDUError) as e:
+            smpplib_logger.error(e)
+            self.event.set()
+            return
+
+        rx_thread = RxThread(client)
+        rx_thread.start()
 
         # Create a queue
         q = Queue()
@@ -127,6 +134,7 @@ class TxThread(threading.Thread):
         # # else:
         print('UNBINDING')
 
+        # todo fix when thread safe
         try:
             client.unbind()
             client.disconnect()
@@ -140,6 +148,7 @@ class RxThread(threading.Thread):
         self.client = client
 
     def run(self):
+        # todo fix when thread safe
         while True:
             if self.client.state == smpplib.consts.SMPP_CLIENT_STATE_BOUND_TRX:
                 try:
