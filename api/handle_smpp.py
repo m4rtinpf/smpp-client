@@ -127,8 +127,11 @@ class TxThread(threading.Thread):
         # # else:
         print('UNBINDING')
 
-        client.unbind()
-        client.disconnect()
+        try:
+            client.unbind()
+            client.disconnect()
+        except:
+            client.state = smpplib.consts.SMPP_CLIENT_STATE_CLOSED
 
 
 class RxThread(threading.Thread):
