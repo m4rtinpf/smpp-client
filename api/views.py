@@ -21,10 +21,6 @@ class UserView(APIView):
     def bind_user(user):
         evt = threading.Event()
 
-        # todo remove
-        user.isBound = False
-        user.save()
-
         tx_thread = TxThread(
             system_id=user.systemId,
             hostname=user.hostname,
@@ -82,11 +78,9 @@ class UserView(APIView):
                 print(UserResponseSerializer(user).data)
 
                 self.bind_user(user)
-                user.refresh_from_db()
+                user.refresh_from_db()  # todo remove?
 
-                print(f"User is bound = {user.isBound}")
-
-                return Response({'isBound': user.isBound}, status=status.HTTP_200_OK)
+                return Response({'test': 'some response'}, status=status.HTTP_200_OK)
             else:
                 user = UserModel(
                     sessionId=session_id,
@@ -103,11 +97,9 @@ class UserView(APIView):
                 print(UserResponseSerializer(user).data)
 
                 self.bind_user(user)
-                user.refresh_from_db()
+                user.refresh_from_db()  # todo remove?
 
-                print(f"User is bound = {user.isBound}")
-
-                return Response({'isBound': user.isBound}, status=status.HTTP_201_CREATED)
+                return Response({'test': 'other response'}, status=status.HTTP_201_CREATED)
 
         return Response({"Bad Request": "Invalid data..."}, status=status.HTTP_400_BAD_REQUEST)
 

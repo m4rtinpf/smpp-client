@@ -27,7 +27,7 @@ export default function BindForm(props) {
             .then((response) => response.json())
             .then((data) => {
                 console.log(data);
-                props.handleBound(data);
+                // props.handleBound(data);
             });
     };
 

@@ -12,7 +12,6 @@ class UserModel(models.Model):
     useSSL = models.BooleanField()
     reconnect = models.BooleanField()
     isDone = models.BooleanField(blank=False, default=False)
-    isBound = models.BooleanField(blank=False, default=False)
 
 
 class MessageModel(models.Model):

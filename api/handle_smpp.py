@@ -43,7 +43,7 @@ class TxThread(threading.Thread):
             # format='%(asctime)s %(levelname)s %(module)s - %(funcName)s: %(message)s',
         )
 
-        handler = LogHandler()
+        handler = LogHandler(client)
         smpplib_logger = logging.getLogger('smpplib_logger')
         smpplib_logger.addHandler(handler)
         smpplib_logger.setLevel('DEBUG')
@@ -63,10 +63,6 @@ class TxThread(threading.Thread):
         )
 
         if client.state == smpplib.consts.SMPP_CLIENT_STATE_BOUND_TRX:
-            print('Client bound as transceiver')
-
-            self.user.isBound = True
-            self.user.save()
             self.event.set()
 
             rx_thread = RxThread(client)
@@ -77,7 +73,7 @@ class TxThread(threading.Thread):
 
         while not self.user.isDone:
             # .save() and .refresh_from_db() ?
-            queryset = MessageModel.objects.filter(client=self.user)
+            queryset = MessageModel.objects.filter(user=self.user)
             if queryset.exists():
                 for message in queryset:
                     print(f"{message.messageText}")
@@ -132,18 +128,25 @@ class RxThread(threading.Thread):
         self.client = client
 
     def run(self):
-        # for i in range(10):
-        #     import uuid
-        #
-        #     my_message = uuid.uuid4()
-        #     print(f'sending SSE message {my_message}')
-
-        # send_event('test', 'message', {'text': f'{my_message}'})
         self.client.listen()
 
 
 class LogHandler(logging.Handler):
+    def __init__(self, client):
+        logging.Handler.__init__(self)
+        self.client = client
+
     def emit(self, record):
         log_entry = self.format(record)
 
-        return send_event('test', 'message', {'text': f'{log_entry}'})
+        if self.client.state == smpplib.consts.SMPP_CLIENT_STATE_BOUND_TRX:
+            is_bound = True
+        else:
+            is_bound = False
+
+        return send_event('01', 'message',
+                          {
+                              'text': log_entry,
+                              'isBound': is_bound,
+                          }
+                          )

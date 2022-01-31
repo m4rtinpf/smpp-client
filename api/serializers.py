@@ -16,7 +16,6 @@ class UserResponseSerializer(serializers.ModelSerializer):
             'useSSL',
             'reconnect',
             'isDone',
-            'isBound',
         )
 
 
