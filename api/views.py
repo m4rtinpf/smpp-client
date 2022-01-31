@@ -39,6 +39,12 @@ class UserView(APIView):
         # Wait for tx_thread to finish setting up the binding
         evt.wait()
 
+    @staticmethod
+    def unbind_user(user):
+        user.isDone = True
+        user.save()
+        # pass
+
     def post(self, request):
         if not self.request.session.exists(self.request.session.session_key):
             self.request.session.create()
@@ -57,6 +63,8 @@ class UserView(APIView):
 
             session_id = self.request.session.session_key
 
+            command = self.request.data['command'].lower()
+
             queryset = UserModel.objects.filter(sessionId=session_id)
             if queryset.exists():
                 user = queryset[0]
@@ -68,6 +76,8 @@ class UserView(APIView):
                 user.useSSL = use_ssl
                 user.reconnect = reconnect
 
+                user.isDone = False
+
                 user.save(update_fields=[
                     'systemId',
                     'hostname',
@@ -76,13 +86,21 @@ class UserView(APIView):
                     'systemType',
                     'useSSL',
                     'reconnect',
+                    'isDone',
                 ])
                 print(UserResponseSerializer(user).data)
 
-                self.bind_user(user)
-                user.refresh_from_db()  # todo remove?
+                if command == 'connect':
+                    self.bind_user(user)
+                    user.refresh_from_db()  # todo remove?
 
-                return Response({}, status=status.HTTP_200_OK)
+                    return Response({}, status=status.HTTP_200_OK)
+                elif command == 'disconnect':
+                    self.unbind_user(user)
+                    user.refresh_from_db()  # todo remove?
+
+                    return Response({'data': 'unbind'}, status=status.HTTP_200_OK)
+
             else:
                 user = UserModel(
                     sessionId=session_id,
@@ -181,6 +199,12 @@ class CreateMessageView(APIView):
                 submitMode=submit_mode,
             )
             message.save()
+
+            queryset = UserModel.objects.filter(sessionId=session_id)
+            if queryset.exists():
+                user = queryset[0]
+                user.isDone = False
+                user.save()
 
             # print(MessageSerializer(message).data)
 

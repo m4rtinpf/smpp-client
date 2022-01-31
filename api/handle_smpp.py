@@ -9,6 +9,8 @@ import smpplib.consts
 from .models import UserModel, MessageModel
 from django_eventstream import send_event
 
+smpp_lock = threading.Lock()
+
 
 class TxThread(threading.Thread):
     def __init__(
@@ -47,6 +49,7 @@ class TxThread(threading.Thread):
         smpplib_logger = logging.getLogger('smpplib_logger')
         smpplib_logger.addHandler(handler)
         smpplib_logger.setLevel('DEBUG')
+        # smpplib_logger.setLevel('DEBUG')
         # smpplib_logger.propagate = False
 
         # Print when obtain message_id
@@ -113,13 +116,19 @@ class TxThread(threading.Thread):
 
             except queue.Empty:
                 pass
-                # print('Empty queue')
 
-        print(
-            f"Exiting thread {threading.currentThread().getName()} for user with session id {self.session_id} \n")
+            self.user.refresh_from_db()
+        #         print('Empty queue')
+        #         self.user.refresh_from_db()
+        #
+        # print(
+        #     f"Exiting thread {threading.currentThread().getName()} for user with session id {self.session_id} \n")
+        #
+        # # else:
+        print('UNBINDING')
 
-    # else:
-    # print(self.user.isDone)
+        client.unbind()
+        client.disconnect()
 
 
 class RxThread(threading.Thread):
@@ -128,7 +137,14 @@ class RxThread(threading.Thread):
         self.client = client
 
     def run(self):
-        self.client.listen()
+        while True:
+            if self.client.state == smpplib.consts.SMPP_CLIENT_STATE_BOUND_TRX:
+                try:
+                    self.client.read_once()
+                except:
+                    break
+        print(
+            'EXITING THREADDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD')
 
 
 class LogHandler(logging.Handler):
