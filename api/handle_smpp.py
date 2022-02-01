@@ -81,9 +81,11 @@ class TxThread(threading.Thread):
             queryset = MessageModel.objects.filter(user=self.user)
             if queryset.exists():
                 for message in queryset:
-                    print(f"{message.messageText}")
-                    # todo bulk submit
-                    q.put(message)
+                    if message.bulkSubmitEnable:
+                        for i in range(message.bulkSubmitTimes):
+                            q.put(message)
+                    else:
+                        q.put(message)
                     message.delete()
 
             try:
