@@ -24,6 +24,8 @@ export default function BindForm(props) {
 
         if (!props.isBound) {
             requestData = Object.assign(bindData, requestData);
+            // remove when SSL is working
+            requestData['useSSL'] = false;
         }
 
         const requestOptions = {
@@ -184,6 +186,8 @@ export default function BindForm(props) {
                         <FormControlLabel
                             control={<Switch size="small" />}
                             label="Use SSL"
+                            // todo remove when SSL is working
+                            disabled
                             {...register("useSSL")}
                         />
                     </Grid>

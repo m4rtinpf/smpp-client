@@ -8,6 +8,7 @@ import smpplib.client
 import smpplib.consts
 from .models import UserModel, MessageModel
 from django_eventstream import send_event
+import ssl
 
 
 class TxThread(threading.Thread):
@@ -30,11 +31,19 @@ class TxThread(threading.Thread):
         self.user = UserModel.objects.get(sessionId=session_id)
 
     def run(self):
+        if self.use_ssl:
+            # todo uncomment when SSL is working (and remove next line)
+            # ssl_context = ssl.create_default_context()
+            ssl_context = None
+        else:
+            ssl_context = None
+
         client = smpplib.client.Client(
             host=self.hostname,
             port=self.port,
             allow_unknown_opt_params=True,
             logger_name='smpplib_logger',
+            ssl_context=ssl_context,
         )
 
         logging.basicConfig(
@@ -123,7 +132,7 @@ class TxThread(threading.Thread):
             client.disconnect()
         except:
             client.state = smpplib.consts.SMPP_CLIENT_STATE_CLOSED
-            smpplib_logger.error('Disconnected with race condition')
+            smpplib_logger.warning('Disconnected with race condition')
 
 
 class RxThread(threading.Thread):
