@@ -20,14 +20,18 @@ export default function BindForm(props) {
     const connectDisconnect = { false: "Connect", true: 'Disconnect' }
 
     const onSubmit = (bindData) => {
-        bindData['command'] = connectDisconnect[props.isBound].toLowerCase();
+        let requestData = { command: connectDisconnect[props.isBound].toLowerCase() };
+
+        if (!props.isBound) {
+            requestData = Object.assign(bindData, requestData);
+        }
 
         const requestOptions = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(bindData),
+            body: JSON.stringify(requestData),
         };
-        console.log(bindData);
+        console.log(requestData);
 
         fetch('/api/bind', requestOptions)
             .then((response) => response.json())

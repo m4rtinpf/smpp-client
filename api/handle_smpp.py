@@ -9,8 +9,6 @@ import smpplib.consts
 from .models import UserModel, MessageModel
 from django_eventstream import send_event
 
-smpp_lock = threading.Lock()
-
 
 class TxThread(threading.Thread):
     def __init__(
@@ -32,7 +30,6 @@ class TxThread(threading.Thread):
         self.user = UserModel.objects.get(sessionId=session_id)
 
     def run(self):
-
         client = smpplib.client.Client(
             host=self.hostname,
             port=self.port,
@@ -41,7 +38,6 @@ class TxThread(threading.Thread):
         )
 
         logging.basicConfig(
-            # level='DEBUG',
             # format='%(asctime)s %(levelname)s %(module)s - %(funcName)s: %(message)s',
         )
 
@@ -49,7 +45,6 @@ class TxThread(threading.Thread):
         smpplib_logger = logging.getLogger('smpplib_logger')
         smpplib_logger.addHandler(handler)
         smpplib_logger.setLevel('DEBUG')
-        # smpplib_logger.setLevel('DEBUG')
         # smpplib_logger.propagate = False
 
         # Print when obtain message_id
@@ -75,6 +70,8 @@ class TxThread(threading.Thread):
             self.event.set()
             return
 
+        self.event.set()
+
         rx_thread = RxThread(client)
         rx_thread.start()
 
@@ -82,7 +79,6 @@ class TxThread(threading.Thread):
         q = Queue()
 
         while not self.user.isDone:
-            # .save() and .refresh_from_db() ?
             queryset = MessageModel.objects.filter(user=self.user)
             if queryset.exists():
                 for message in queryset:
@@ -94,9 +90,6 @@ class TxThread(threading.Thread):
             try:
                 message = q.get(block=False)
                 if message is not None:
-                    print("+++++++++++++Begin send++++++++++++++")
-                    print(f"Message: {message.messageText}")
-
                     # Two parts, UCS2, SMS with UDH
                     parts, encoding_flag, msg_type_flag = smpplib.gsm.make_parts(message.messageText)
 
@@ -117,22 +110,11 @@ class TxThread(threading.Thread):
                             esm_class=msg_type_flag,
                             registered_delivery=True,
                         )
-                        print(pdu.sequence)
-
-                    print("+++++++++++++Finish send++++++++++++++")
 
             except queue.Empty:
                 pass
 
             self.user.refresh_from_db()
-        #         print('Empty queue')
-        #         self.user.refresh_from_db()
-        #
-        # print(
-        #     f"Exiting thread {threading.currentThread().getName()} for user with session id {self.session_id} \n")
-        #
-        # # else:
-        print('UNBINDING')
 
         # todo fix when thread safe
         try:
@@ -155,8 +137,6 @@ class RxThread(threading.Thread):
                     self.client.read_once()
                 except:
                     break
-        print(
-            'EXITING THREADDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD')
 
 
 class LogHandler(logging.Handler):

@@ -41,84 +41,89 @@ class UserView(APIView):
 
     @staticmethod
     def unbind_user(user):
-        user.isDone = True
-        user.save()
+        pass
 
     def post(self, request):
         if not self.request.session.exists(self.request.session.session_key):
             self.request.session.create()
 
-        print(f'user request: {request.data}')
+        print(f'User request: {request.data}')
 
-        request_serializer = self.request_serializer_class(data=request.data)
-        if request_serializer.is_valid():
-            system_id = request_serializer.data.get('systemId')
-            hostname = request_serializer.data.get('hostname')
-            password = request_serializer.data.get('password')
-            port = request_serializer.data.get('port')
-            system_type = request_serializer.data.get('systemType')
-            use_ssl = request_serializer.data.get('useSSL')
-            reconnect = request_serializer.data.get('reconnect')
+        if self.request.data['command'].lower() == 'connect':
+            request_serializer = self.request_serializer_class(data=request.data)
+            if request_serializer.is_valid():
+                system_id = request_serializer.data.get('systemId')
+                hostname = request_serializer.data.get('hostname')
+                password = request_serializer.data.get('password')
+                port = request_serializer.data.get('port')
+                system_type = request_serializer.data.get('systemType')
+                use_ssl = request_serializer.data.get('useSSL')
+                reconnect = request_serializer.data.get('reconnect')
 
+                session_id = self.request.session.session_key
+
+                queryset = UserModel.objects.filter(sessionId=session_id)
+                if queryset.exists():
+                    user = queryset[0]
+                    user.systemId = system_id
+                    user.hostname = hostname
+                    user.password = password
+                    user.port = port
+                    user.systemType = system_type
+                    user.useSSL = use_ssl
+                    user.reconnect = reconnect
+
+                    user.isDone = False
+
+                    user.save(update_fields=[
+                        'systemId',
+                        'hostname',
+                        'password',
+                        'port',
+                        'systemType',
+                        'useSSL',
+                        'reconnect',
+                        'isDone',
+                    ])
+
+                    self.bind_user(user)
+
+                    return Response({}, status=status.HTTP_200_OK)
+
+                else:
+                    user = UserModel(
+                        sessionId=session_id,
+                        systemId=system_id,
+                        hostname=hostname,
+                        password=password,
+                        port=port,
+                        systemType=system_type,
+                        useSSL=use_ssl,
+                        reconnect=reconnect,
+                        isDone=False,
+                    )
+                    user.save()
+
+                    self.bind_user(user)
+
+                    return Response({}, status=status.HTTP_201_CREATED)
+
+        elif self.request.data['command'].lower() == 'disconnect':
             session_id = self.request.session.session_key
-
-            command = self.request.data['command'].lower()
 
             queryset = UserModel.objects.filter(sessionId=session_id)
             if queryset.exists():
                 user = queryset[0]
-                user.systemId = system_id
-                user.hostname = hostname
-                user.password = password
-                user.port = port
-                user.systemType = system_type
-                user.useSSL = use_ssl
-                user.reconnect = reconnect
 
-                user.isDone = False
+                user.isDone = True
+                user.save(update_fields=['isDone', ])
 
-                user.save(update_fields=[
-                    'systemId',
-                    'hostname',
-                    'password',
-                    'port',
-                    'systemType',
-                    'useSSL',
-                    'reconnect',
-                    'isDone',
-                ])
-                print(UserResponseSerializer(user).data)
+                self.unbind_user(user)
 
-                if command == 'connect':
-                    self.bind_user(user)
-                    user.refresh_from_db()  # todo remove?
-
-                    return Response({}, status=status.HTTP_200_OK)
-                elif command == 'disconnect':
-                    self.unbind_user(user)
-                    user.refresh_from_db()  # todo remove?
-
-                    return Response({'data': 'unbind'}, status=status.HTTP_200_OK)
+                return Response({}, status=status.HTTP_200_OK)
 
             else:
-                user = UserModel(
-                    sessionId=session_id,
-                    systemId=system_id,
-                    hostname=hostname,
-                    password=password,
-                    port=port,
-                    systemType=system_type,
-                    useSSL=use_ssl,
-                    reconnect=reconnect,
-                )
-                user.save()
-
-                print(UserResponseSerializer(user).data)
-
-                self.bind_user(user)
-                user.refresh_from_db()  # todo remove?
-
-                return Response({}, status=status.HTTP_201_CREATED)
+                return Response({'error': "user doesn't exist"}, status=status.HTTP_204_NO_CONTENT)
 
         return Response({}, status=status.HTTP_400_BAD_REQUEST)
 
