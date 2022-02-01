@@ -1,49 +1,55 @@
-import React from 'react';
-import { Grid } from '@mui/material';
+import React, { useEffect, useRef } from 'react';
+import { Grid, Box, Typography } from '@mui/material';
 //import './App.css';
 import { useSSE, SSEProvider } from 'react-hooks-sse';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
 
-let logText = [];
+let messages = [];
 
-function GetLog() {
-    // todo hacky
+const Messages = (props) => {
     const state = useSSE('message');
 
+    const messagesEndRef = useRef(null);
+    const scrollToBottom = () => {
+        messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(scrollToBottom, [state]);
+
     try {
-        logText.push(state['text']);
+        messages.push(state['text']);
+
     }
     catch {
     }
+
     return (
-        <React.Fragment>
-            {logText.map((row) => (
-                <TableRow                >
-                    <TableCell
-                        component="th"
-                        scope="row"
+        <Box
+            className="messagesWrapper"
+            sx={{
+                borderRadius: 1,
+                padding: 1,
+            }}
+        >
+            {
+                messages.map(message => (
+                    <Typography
+                        key={message}
                         style={{
-                            border: "none",
                             fontFamily: 'Monospace',
                             fontSize: '0.75rem',
                         }}
-                    >
-                        {row}
-                    </TableCell>
-                </TableRow>
-            ))
+                    >{message}</Typography>
+                ))
             }
-        </React.Fragment >
+            < div
+                ref={messagesEndRef}
+            />
+        </Box >
     );
-}
+};
 
 export default function LogComponent() {
+
     return (
         <React.Fragment>
             <form>
@@ -54,52 +60,13 @@ export default function LogComponent() {
                 >
 
                     <Grid item xs={12}>
+                        <Typography variant="h6">Log</Typography>
+                    </Grid>
 
-                        <TableContainer
-                            component={Paper}
-                            sx={{
-                                maxHeight: '200px',
-                                boxShadow: "none",
-                            }}
-                        >
-                            <Table
-                                // size='small'
-                                padding="none"
-                                stickyHeader
-                            >
-
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell
-                                            style={{
-                                                fontSize: '1.5rem',
-                                            }}
-                                        >
-                                            Log
-                                        </TableCell>
-                                    </TableRow>
-                                </TableHead>
-
-                                <TableBody>
-                                    <SSEProvider endpoint="/events/">
-                                        <GetLog />
-                                    </SSEProvider>
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-
-                        {/* <TextField
-                            id="log"
-                            label="Log"
-                            multiline
-                            fullWidth={true}
-                            maxRows={7}
-                            InputProps={{
-                                readOnly: true,
-                            }}
-                            
-                            value={logText}
-                        /> */}
+                    <Grid item xs={12}>
+                        <SSEProvider endpoint="/events/">
+                            <Messages />
+                        </SSEProvider>
                     </Grid>
 
                 </Grid>
