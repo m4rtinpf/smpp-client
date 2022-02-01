@@ -47,7 +47,7 @@ class UserView(APIView):
         if not self.request.session.exists(self.request.session.session_key):
             self.request.session.create()
 
-        print(f'User request: {request.data}')
+        print(f'Bind request: {request.data}')
 
         if self.request.data['command'].lower() == 'connect':
             request_serializer = self.request_serializer_class(data=request.data)
@@ -132,8 +132,7 @@ class CreateMessageView(APIView):
     serializer_class = CreateMessageSerializer
 
     def post(self, request):
-        if not self.request.session.exists(self.request.session.session_key):
-            self.request.session.create()
+        print(f'Message request: {request.data}')
 
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
@@ -152,66 +151,33 @@ class CreateMessageView(APIView):
 
             session_id = self.request.session.session_key
 
-            # queryset = MessageModel.objects.filter(user=session_id)
-            # if queryset.exists():
-            #     message = queryset[0]
-            #     message.messageText = message_text
-            #     message.sourceAddr = source_addr
-            #     message.sourceAddrTON = source_addr_ton
-            #     message.sourceAddrNPI = source_addr_npi
-            #     message.destAddr = dest_addr
-            #     message.destAddrTON = dest_addr_ton
-            #     message.destAddrNPI = dest_addr_npi
-            #     message.serviceType = service_type
-            #     message.bulkSubmitEnable = bulk_submit_enable
-            #     message.bulkSubmitTimes = bulk_submit_times
-            #     message.dataCoding = data_coding
-            #     message.submitMode = submit_mode
-            #
-            #     message.save(update_fields=[
-            #         'messageText',
-            #         'sourceAddr',
-            #         'sourceAddrTON',
-            #         'sourceAddrNPI',
-            #         'destAddr',
-            #         'destAddrTON',
-            #         'destAddrNPI',
-            #         'serviceType',
-            #         'bulkSubmitEnable',
-            #         'bulkSubmitTimes',
-            #         'dataCoding',
-            #         'submitMode',
-            #     ])
-            #     print(MessageSerializer(message).data)
-            #
-            #     return Response(MessageSerializer(message).data, status=status.HTTP_200_OK)
-            # else:
-            message = MessageModel(
-                user=UserModel.objects.filter(sessionId=session_id)[0],
-                # todo check that the user exists
-                messageText=message_text,
-                sourceAddr=source_addr,
-                sourceAddrTON=source_addr_ton,
-                sourceAddrNPI=source_addr_npi,
-                destAddr=dest_addr,
-                destAddrTON=dest_addr_ton,
-                destAddrNPI=dest_addr_npi,
-                serviceType=service_type,
-                bulkSubmitEnable=bulk_submit_enable,
-                bulkSubmitTimes=bulk_submit_times,
-                dataCoding=data_coding,
-                submitMode=submit_mode,
-            )
-            message.save()
-
             queryset = UserModel.objects.filter(sessionId=session_id)
             if queryset.exists():
                 user = queryset[0]
+
+                message = MessageModel(
+                    user=user,
+                    messageText=message_text,
+                    sourceAddr=source_addr,
+                    sourceAddrTON=source_addr_ton,
+                    sourceAddrNPI=source_addr_npi,
+                    destAddr=dest_addr,
+                    destAddrTON=dest_addr_ton,
+                    destAddrNPI=dest_addr_npi,
+                    serviceType=service_type,
+                    bulkSubmitEnable=bulk_submit_enable,
+                    bulkSubmitTimes=bulk_submit_times,
+                    dataCoding=data_coding,
+                    submitMode=submit_mode,
+                )
+                message.save()
+
                 user.isDone = False
-                user.save()
+                user.save(update_fields=['isDone'])
 
-            # print(MessageSerializer(message).data)
+                return Response(MessageSerializer(message).data, status=status.HTTP_201_CREATED)
 
-            return Response(MessageSerializer(message).data, status=status.HTTP_201_CREATED)
+            else:
+                return Response({'error': "user doesn't exist"}, status=status.HTTP_204_NO_CONTENT)
 
         return Response({}, status=status.HTTP_400_BAD_REQUEST)

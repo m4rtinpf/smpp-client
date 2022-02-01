@@ -14,7 +14,7 @@ class TxThread(threading.Thread):
     def __init__(
             self, system_id, hostname, password, port, system_type, use_ssl, reconnect, session_id, command, event,
     ):
-        threading.Thread.__init__(self)
+        super().__init__()
 
         self.system_id = system_id
         self.hostname = hostname
@@ -75,7 +75,6 @@ class TxThread(threading.Thread):
         rx_thread = RxThread(client)
         rx_thread.start()
 
-        # Create a queue
         q = Queue()
 
         while not self.user.isDone:
@@ -122,11 +121,12 @@ class TxThread(threading.Thread):
             client.disconnect()
         except:
             client.state = smpplib.consts.SMPP_CLIENT_STATE_CLOSED
+            smpplib_logger.error('Disconnected with race condition')
 
 
 class RxThread(threading.Thread):
     def __init__(self, client):
-        threading.Thread.__init__(self)
+        super().__init__()
         self.client = client
 
     def run(self):
@@ -141,7 +141,7 @@ class RxThread(threading.Thread):
 
 class LogHandler(logging.Handler):
     def __init__(self, client):
-        logging.Handler.__init__(self)
+        super().__init__()
         self.client = client
 
     def emit(self, record):
