@@ -1,0 +1,8 @@
+.messagesWrapper {
+    display: flex;
+    flex-direction: column;
+    border: 1px #bdbdbd solid;
+    height: 150px;
+    overflow: auto;
+    /* margin-top: 1rem; */
+  }
