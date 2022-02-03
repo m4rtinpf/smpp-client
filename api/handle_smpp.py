@@ -9,6 +9,9 @@ import smpplib.consts
 from .models import UserModel, MessageModel
 from django_eventstream import send_event
 import ssl
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+import json
 
 
 class TxThread(threading.Thread):
@@ -163,9 +166,10 @@ class LogHandler(logging.Handler):
         else:
             is_bound = False
 
-        return send_event('01', 'message',
-                          {
-                              'text': log_entry,
-                              'isBound': is_bound,
-                          }
-                          )
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            'message_group',
+            {'type': 'send_message', 'message': json.dumps(
+                {'logMessage': log_entry, 'isBound': is_bound}
+            )}
+        )

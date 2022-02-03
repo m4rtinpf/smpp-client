@@ -1,5 +1,4 @@
 import threading
-
 from django.shortcuts import render
 from rest_framework import generics, status
 from .serializers import UserResponseSerializer, UserRequestSerializer, MessageSerializer, CreateMessageSerializer
@@ -88,7 +87,7 @@ class UserView(APIView):
 
                     self.bind_user(user)
 
-                    return Response({}, status=status.HTTP_200_OK)
+                    return Response({'userId': user.id}, status=status.HTTP_200_OK)
 
                 else:
                     user = UserModel(
@@ -106,7 +105,7 @@ class UserView(APIView):
 
                     self.bind_user(user)
 
-                    return Response({}, status=status.HTTP_201_CREATED)
+                    return Response({'userId': user.id}, status=status.HTTP_201_CREATED)
 
         elif self.request.data['command'].lower() == 'disconnect':
             session_id = self.request.session.session_key

@@ -26,6 +26,6 @@
     "webpack-cli": "^4.9.2"
   },
   "dependencies": {
-    "react-hooks-sse": "^2.0.0"
+    "react-use-websocket": "^2.9.1"
   }
 }
