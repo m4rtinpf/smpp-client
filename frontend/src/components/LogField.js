@@ -4,14 +4,14 @@ import { Grid, Box, Typography } from '@mui/material';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 
 const Messages = () => {
-    const [socketUrl, setSocketUrl] = useState('ws://localhost:8000/ws/api/');
+    const [socketUrl, setSocketUrl] = useState('ws://127.0.0.1:8000/ws/api/');
     const [messageHistory, setMessageHistory] = useState([]);
 
     const {
         sendMessage,
         lastMessage,
         readyState,
-    } = useWebSocket(socketUrl);
+    } = useWebSocket(socketUrl, { shouldReconnect: (closeEvent) => true, reconnectInterval: 1000, });
 
     useEffect(() => {
         if (lastMessage !== null) {

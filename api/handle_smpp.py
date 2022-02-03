@@ -12,6 +12,7 @@ import ssl
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import json
+from .consumers import get_group_name_from_user_id
 
 
 class TxThread(threading.Thread):
@@ -53,7 +54,7 @@ class TxThread(threading.Thread):
             # format='%(asctime)s %(levelname)s %(module)s - %(funcName)s: %(message)s',
         )
 
-        handler = LogHandler(client)
+        handler = LogHandler(client, self.user.id)
         smpplib_logger = logging.getLogger('smpplib_logger')
         smpplib_logger.addHandler(handler)
         smpplib_logger.setLevel('DEBUG')
@@ -154,9 +155,10 @@ class RxThread(threading.Thread):
 
 
 class LogHandler(logging.Handler):
-    def __init__(self, client):
+    def __init__(self, client, user_id):
         super().__init__()
         self.client = client
+        self.user_id = user_id
 
     def emit(self, record):
         log_entry = self.format(record)
@@ -168,7 +170,7 @@ class LogHandler(logging.Handler):
 
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
-            'message_group',
+            get_group_name_from_user_id(self.user_id),
             {'type': 'send_message', 'message': json.dumps(
                 {'logMessage': log_entry, 'isBound': is_bound}
             )}
