@@ -1,26 +1,39 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Grid, Box, Typography } from '@mui/material';
 //import './App.css';
-import { useSSE, SSEProvider } from 'react-hooks-sse';
+import useWebSocket, { ReadyState } from 'react-use-websocket';
 
-let messages = [];
+const Messages = () => {
+    const [socketUrl, setSocketUrl] = useState('ws://localhost:8000/ws/api/');
+    const [messageHistory, setMessageHistory] = useState([]);
 
-const Messages = (props) => {
-    const state = useSSE('message');
+    const {
+        sendMessage,
+        lastMessage,
+        readyState,
+    } = useWebSocket(socketUrl);
+
+    useEffect(() => {
+        if (lastMessage !== null) {
+            setMessageHistory(prev => prev.concat(lastMessage));
+        }
+    }, [lastMessage, setMessageHistory]);
+
+    const connectionStatus = {
+        [ReadyState.CONNECTING]: 'Connecting',
+        [ReadyState.OPEN]: 'Open',
+        [ReadyState.CLOSING]: 'Closing',
+        [ReadyState.CLOSED]: 'Closed',
+        [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
+    }[readyState];
+
 
     const messagesEndRef = useRef(null);
     const scrollToBottom = () => {
         messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     };
 
-    useEffect(scrollToBottom, [state]);
-
-    try {
-        messages.push(state['text']);
-
-    }
-    catch {
-    }
+    useEffect(scrollToBottom, [messageHistory]);
 
     return (
         <Box
@@ -31,14 +44,16 @@ const Messages = (props) => {
             }}
         >
             {
-                messages.map(message => (
+                messageHistory.map((message, idx) => (
                     <Typography
-                        key={message}
+                        key={idx}
                         style={{
                             fontFamily: 'Monospace',
                             fontSize: '0.75rem',
                         }}
-                    >{message}</Typography>
+                    >
+                        {message ? JSON.parse(message.data)['logMessage'] : console.error(message.data)}
+                    </Typography>
                 ))
             }
             < div
@@ -47,6 +62,7 @@ const Messages = (props) => {
         </Box >
     );
 };
+
 
 export default function LogComponent() {
 
@@ -64,9 +80,7 @@ export default function LogComponent() {
                     </Grid>
 
                     <Grid item xs={12}>
-                        <SSEProvider endpoint="/events/">
-                            <Messages />
-                        </SSEProvider>
+                        <Messages />
                     </Grid>
 
                 </Grid>

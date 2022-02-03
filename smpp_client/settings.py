@@ -39,7 +39,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'frontend.apps.FrontendConfig',
     'channels',
-    'django_eventstream',
 ]
 
 MIDDLEWARE = [
@@ -50,7 +49,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django_grip.GripMiddleware',
 ]
 
 ROOT_URLCONF = 'smpp_client.urls'
@@ -77,6 +75,15 @@ WSGI_APPLICATION = 'smpp_client.wsgi.application'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 ASGI_APPLICATION = 'smpp_client.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 DATABASES = {
     'default': {
