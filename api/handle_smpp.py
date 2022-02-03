@@ -46,7 +46,7 @@ class TxThread(threading.Thread):
             host=self.hostname,
             port=self.port,
             allow_unknown_opt_params=True,
-            logger_name='smpplib_logger',
+            logger_name=f'smpplib_logger_{self.user.id}',
             ssl_context=ssl_context,
         )
 
@@ -55,7 +55,7 @@ class TxThread(threading.Thread):
         )
 
         handler = LogHandler(client, self.user.id)
-        smpplib_logger = logging.getLogger('smpplib_logger')
+        smpplib_logger = logging.getLogger(f'smpplib_logger_{self.user.id}')
         smpplib_logger.addHandler(handler)
         smpplib_logger.setLevel('DEBUG')
         # smpplib_logger.propagate = False
@@ -85,7 +85,7 @@ class TxThread(threading.Thread):
 
         self.event.set()
 
-        rx_thread = RxThread(client)
+        rx_thread = RxThread(client, smpplib_logger)
         rx_thread.start()
 
         q = Queue()
@@ -137,12 +137,15 @@ class TxThread(threading.Thread):
         except:
             client.state = smpplib.consts.SMPP_CLIENT_STATE_CLOSED
             smpplib_logger.warning('Disconnected with race condition')
+        finally:
+            smpplib_logger.removeHandler(handler)
 
 
 class RxThread(threading.Thread):
-    def __init__(self, client):
+    def __init__(self, client, smpplib_logger):
         super().__init__()
         self.client = client
+        self.smpplib_logger = smpplib_logger
 
     def run(self):
         # todo fix when thread safe
@@ -151,7 +154,11 @@ class RxThread(threading.Thread):
                 try:
                     self.client.read_once()
                 except:
+                    self.client.state = smpplib.consts.SMPP_CLIENT_STATE_CLOSED
+                    self.smpplib_logger.warning('Disconnected with race condition')
                     break
+            else:
+                break
 
 
 class LogHandler(logging.Handler):
@@ -168,7 +175,10 @@ class LogHandler(logging.Handler):
         else:
             is_bound = False
 
+        log_entry = f'{self.user_id} : {log_entry}'
+
         channel_layer = get_channel_layer()
+
         async_to_sync(channel_layer.group_send)(
             get_group_name_from_user_id(self.user_id),
             {'type': 'send_message', 'message': json.dumps(

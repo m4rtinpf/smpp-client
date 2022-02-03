@@ -19,7 +19,7 @@ class LogConsumer(WebsocketConsumer):
             if queryset.exists():
                 user = queryset[0]
                 self.group_name = get_group_name_from_user_id(user.id)
-                print(self.group_name)
+                # print(self.group_name)
                 self.accept()
                 async_to_sync(self.channel_layer.group_add)(self.group_name, self.channel_name)
 
@@ -29,4 +29,6 @@ class LogConsumer(WebsocketConsumer):
 
     def send_message(self, event):
         message = event['message']
+        if '18' in message:
+            print(message)
         self.send(message)
