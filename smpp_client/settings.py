@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -18,13 +19,55 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-so72wicdd-#nyft$z2sb+4pf#qf6h_2nyrg644jv#k1fw096li'
+if 'IS_DEPLOYED' in os.environ:
+    # SECURITY WARNING: keep the secret key used in production secret!
+    MY_SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+    # SECURITY WARNING: don't run with debug turned on in production!
+    # DEBUG = False
+    DEBUG = True
 
-ALLOWED_HOSTS = []
+    DATABASES = {
+        'default': {
+            # If you are using Cloud SQL for MySQL rather than PostgreSQL, set
+            # 'ENGINE': 'django.db.backends.mysql' instead of the following.
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DATABASE_NAME'),
+            'USER': os.getenv('DATABASE_USER'),
+            'PASSWORD': os.getenv('DATABASE_PASSWORD'),
+            'HOST': '127.0.0.1',
+            'PORT': '5432',
+        }
+    }
+
+    # todo fix
+    ALLOWED_HOSTS = ['*']
+
+    # Static files (CSS, JavaScript, Images)
+    # https://docs.djangoproject.com/en/3.2/howto/static-files/
+
+    STATIC_ROOT = Path.joinpath(BASE_DIR, 'frontend')
+
+    STATIC_URL = 'http://storage.googleapis.com/smpp-client-338121_media-bucket/static/'
+else:
+    MY_SECRET_KEY = 'django-insecure-so72wicdd-#nyft$z2sb+4pf#qf6h_2nyrg644jv#k1fw096li'
+
+    DEBUG = True
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
+    ALLOWED_HOSTS = []
+
+    STATIC_ROOT = Path.joinpath(BASE_DIR, 'frontend')
+
+    STATIC_URL = '/static/'
+
+SECRET_KEY = MY_SECRET_KEY
 
 # Application definition
 
@@ -85,13 +128,6 @@ CHANNEL_LAYERS = {
     },
 }
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
@@ -122,13 +158,6 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.2/howto/static-files/
-
-STATIC_ROOT = Path.joinpath(BASE_DIR, 'frontend')
-
-STATIC_URL = '/static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field

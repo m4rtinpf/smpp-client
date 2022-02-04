@@ -7,7 +7,6 @@ import smpplib.gsm
 import smpplib.client
 import smpplib.consts
 from .models import UserModel, MessageModel
-from django_eventstream import send_event
 import ssl
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
