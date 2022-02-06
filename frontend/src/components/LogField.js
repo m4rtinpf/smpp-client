@@ -4,7 +4,7 @@ import { Grid, Box, Typography } from '@mui/material';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 
 const Messages = () => {
-    const [socketUrl, setSocketUrl] = useState('ws://0.0.0.0:8000/ws/api/');
+    const [socketUrl, setSocketUrl] = useState('ws://127.0.0.1:8000/ws/api/');
     const [messageHistory, setMessageHistory] = useState([]);
 
     const {

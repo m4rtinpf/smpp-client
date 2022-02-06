@@ -53,17 +53,29 @@ ADD . /app
 
 
 # RUN apt-get update
+# RUN apt-get install apt-utils -y
 # RUN apt-get install redis-server -y
-# CMD redis-server
+
+#
+# RUN apt-get update
+# RUN apt-get install apt-utils -y
+# RUN apt-get install software-properties-common -y
+# RUN add-apt-repository ppa:redislabs/redis -y
+# RUN apt-get update
+# RUN apt-get install redis -y
+#
+# RUN redis-server
+
 
 # React
-# CMD yarn run build
+# RUN yarn run build
 
 # Django migrations and collecting static files
-CMD /env/bin/python3 manage.py makemigrations
-CMD /env/bin/python3 manage.py migrate --noinput --fake
-CMD /env/bin/python3 manage.py migrate --noinput --fake-initial
-# CMD /env/bin/python3 manage.py collectstatic
+RUN /env/bin/python3 manage.py makemigrations
+RUN /env/bin/python3 manage.py migrate --noinput
+# RUN /env/bin/python3 manage.py migrate --noinput --fake
+# RUN /env/bin/python3 manage.py migrate --noinput --fake-initial
+# RUN /env/bin/python3 manage.py collectstatic --noinput
 
 # Start Daphne
 ENV DJANGO_SETTINGS_MODULE="smpp_client.settings"

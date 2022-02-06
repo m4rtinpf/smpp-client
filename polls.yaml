@@ -91,7 +91,14 @@ spec:
               mountPath: /etc/ssl/certs
             - name: cloudsql
               mountPath: /cloudsql
-      # [END proxy_container] 
+        # [END proxy_container]
+
+        # [START redis_container]
+        - image: redis:5
+          name: redis
+          ports:
+            - containerPort: 6379
+      # [END redis_container]
       # [START volumes]
       volumes:
         - name: cloudsql-oauth-credentials
