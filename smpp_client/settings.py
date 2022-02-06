@@ -25,7 +25,7 @@ if 'IS_DEPLOYED' in os.environ:
 
     # SECURITY WARNING: don't run with debug turned on in production!
     # DEBUG = False
-    DEBUG = True
+    DEBUG = False
 
     DATABASES = {
         'default': {
@@ -46,7 +46,7 @@ if 'IS_DEPLOYED' in os.environ:
     # Static files (CSS, JavaScript, Images)
     # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-    STATIC_ROOT = Path.joinpath(BASE_DIR, 'frontend')
+    STATIC_ROOT = Path('frontend')
 
     STATIC_URL = 'http://storage.googleapis.com/smpp-client-338121_media-bucket/static/'
 else:
