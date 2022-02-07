@@ -25,7 +25,7 @@ if 'IS_DEPLOYED' in os.environ:
 
     # SECURITY WARNING: don't run with debug turned on in production!
     # DEBUG = False
-    DEBUG = False
+    DEBUG = True
 
     DATABASES = {
         'default': {
@@ -48,7 +48,7 @@ if 'IS_DEPLOYED' in os.environ:
 
     STATIC_ROOT = Path('frontend')
 
-    STATIC_URL = 'http://storage.googleapis.com/smpp-client-338121_media-bucket/static/'
+    STATIC_URL = 'https://storage.googleapis.com/smpp-client-338121_media-bucket/static/'
 else:
     MY_SECRET_KEY = 'django-insecure-so72wicdd-#nyft$z2sb+4pf#qf6h_2nyrg644jv#k1fw096li'
 

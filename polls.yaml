@@ -30,7 +30,8 @@ metadata:
   labels:
     app: polls
 spec:
-  replicas: 3
+  # todo only works with a single replica; otherwise the HTTP requests could go to one replica and the WS ones to another
+  replicas: 1
   selector:
     matchLabels:
       app: polls

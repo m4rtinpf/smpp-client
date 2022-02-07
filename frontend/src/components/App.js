@@ -10,10 +10,11 @@ import useWebSocket, { ReadyState } from 'react-use-websocket';
 export default function App() {
   const [isBound, setIsBound] = useState(false);
 
-  const GetIsBound = (props) => {
-    const [socketUrl, setSocketUrl] = useState('ws://127.0.0.1:8000/ws/api/');
-    const [messageHistory, setMessageHistory] = useState([]);
+  const socketUrl = 'ws://35.193.201.166:80/ws/api/';
 
+  const [messageHistory, setMessageHistory] = useState([]);
+
+  const GetIsBound = (props) => {
     const {
       sendMessage,
       lastMessage,
@@ -22,9 +23,9 @@ export default function App() {
 
     useEffect(() => {
       if (lastMessage !== null) {
-        setMessageHistory(prev => prev.concat(lastMessage));
+        props.setMessageHistory(prev => prev.concat(lastMessage));
       }
-    }, [lastMessage, setMessageHistory]);
+    }, [lastMessage, props.setMessageHistory]);
 
 
     const myFunc = () => {
@@ -36,7 +37,7 @@ export default function App() {
     return (
       <React.Fragment>
         {
-          messageHistory.map((message, idx) => (
+          props.messageHistory.map((message, idx) => (
             <Typography
               key={idx}
               style={{
@@ -61,7 +62,11 @@ export default function App() {
 
       <Typography variant="h2" align='center' sx={{ fontWeight: 'bold' }}>SMPP client</Typography>
 
-      <GetIsBound setIsBound={setIsBound} />
+      <GetIsBound
+        setIsBound={setIsBound}
+        messageHistory={messageHistory}
+        setMessageHistory={setMessageHistory}
+      />
 
       <BindForm
         isBound={isBound}
@@ -71,7 +76,9 @@ export default function App() {
         isBound={isBound}
       />
 
-      <LogField />
+      <LogField
+        messageHistory={messageHistory}
+      />
 
     </Container >
   );

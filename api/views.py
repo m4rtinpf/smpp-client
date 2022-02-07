@@ -36,7 +36,7 @@ class UserView(APIView):
         tx_thread.start()
 
         # Wait for tx_thread to finish setting up the binding
-        evt.wait()
+        # evt.wait()
 
     @staticmethod
     def unbind_user(user):
