@@ -87,7 +87,7 @@ class UserView(APIView):
 
                     self.bind_user(user)
 
-                    return Response({'userId': user.id}, status=status.HTTP_200_OK)
+                    return Response({}, status=status.HTTP_200_OK)
 
                 else:
                     user = UserModel(
@@ -105,7 +105,7 @@ class UserView(APIView):
 
                     self.bind_user(user)
 
-                    return Response({'userId': user.id}, status=status.HTTP_201_CREATED)
+                    return Response({}, status=status.HTTP_201_CREATED)
 
         elif self.request.data['command'].lower() == 'disconnect':
             session_id = self.request.session.session_key
@@ -174,7 +174,7 @@ class CreateMessageView(APIView):
                 user.isDone = False
                 user.save(update_fields=['isDone'])
 
-                return Response(MessageSerializer(message).data, status=status.HTTP_201_CREATED)
+                return Response({}, status=status.HTTP_201_CREATED)
 
             else:
                 return Response({'error': "user doesn't exist"}, status=status.HTTP_204_NO_CONTENT)
