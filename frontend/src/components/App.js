@@ -10,48 +10,22 @@ import useWebSocket, { ReadyState } from 'react-use-websocket';
 export default function App() {
   const [isBound, setIsBound] = useState(false);
 
-  const socketUrl = 'ws://35.193.201.166:80/ws/api/';
+  const socketUrl = `ws://${document.location.host}/ws/api/`;
 
   const [messageHistory, setMessageHistory] = useState([]);
 
-  const GetIsBound = (props) => {
-    const {
-      sendMessage,
-      lastMessage,
-      readyState,
-    } = useWebSocket(socketUrl, { shouldReconnect: (closeEvent) => true, reconnectInterval: 1000, });
+  const {
+    sendMessage,
+    lastMessage,
+    readyState,
+  } = useWebSocket(socketUrl, { shouldReconnect: (closeEvent) => true, reconnectInterval: 1000, });
 
-    useEffect(() => {
-      if (lastMessage !== null) {
-        props.setMessageHistory(prev => prev.concat(lastMessage));
-      }
-    }, [lastMessage, props.setMessageHistory]);
-
-
-    const myFunc = () => {
-      if (JSON.parse(message.data)['isBound'] !== undefined) {
-
-      }
+  useEffect(() => {
+    if (lastMessage !== null) {
+      setMessageHistory(prev => prev.concat(lastMessage));
+      setIsBound(JSON.parse(lastMessage.data)['isBound']);
     }
-
-    return (
-      <React.Fragment>
-        {
-          props.messageHistory.map((message, idx) => (
-            <Typography
-              key={idx}
-              style={{
-                fontFamily: 'Monospace',
-                fontSize: '0.75rem',
-              }}
-            >
-              {message ? props.setIsBound(JSON.parse(message.data)['isBound']) : console.error(message.data)}
-            </Typography>
-          ))
-        }
-      </React.Fragment>
-    );
-  };
+  }, [lastMessage, setMessageHistory]);
 
   return (
 
@@ -61,12 +35,6 @@ export default function App() {
     >
 
       <Typography variant="h2" align='center' sx={{ fontWeight: 'bold' }}>SMPP client</Typography>
-
-      <GetIsBound
-        setIsBound={setIsBound}
-        messageHistory={messageHistory}
-        setMessageHistory={setMessageHistory}
-      />
 
       <BindForm
         isBound={isBound}

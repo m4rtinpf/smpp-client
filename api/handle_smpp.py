@@ -174,8 +174,6 @@ class LogHandler(logging.Handler):
         else:
             is_bound = False
 
-        log_entry = f'{self.user_id} : {log_entry}'
-
         channel_layer = get_channel_layer()
 
         async_to_sync(channel_layer.group_send)(

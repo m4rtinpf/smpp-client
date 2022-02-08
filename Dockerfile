@@ -28,45 +28,6 @@ ADD requirements.txt /app/requirements.txt
 RUN /env/bin/pip install --upgrade pip && /env/bin/pip install -r /app/requirements.txt
 ADD . /app
 
-# # Note: REDISHOST value here is only used for local testing
-# # See README.md on how to inject environment variable as ConfigMap on GKE
-# ENV REDISHOST 127.0.0.1
-# ENV REDISPORT 6379
-
-# RUN apt-get update
-# RUN apt-get install apt-utils -y
-# RUN apt-get install apt-transport-https ca-certificates -y
-# RUN apt-get install \
-#     ca-certificates \
-#     curl \
-#     gnupg \
-#     lsb-release \
-#     -y
-# RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-# RUN echo \
-#   "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-#   $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-# RUN apt-get update
-# RUN apt-get install docker-ce docker-ce-cli containerd.io -y
-# CMD service docker start
-# CMD docker run -p 6379:6379 -d redis:5
-
-
-# RUN apt-get update
-# RUN apt-get install apt-utils -y
-# RUN apt-get install redis-server -y
-
-#
-# RUN apt-get update
-# RUN apt-get install apt-utils -y
-# RUN apt-get install software-properties-common -y
-# RUN add-apt-repository ppa:redislabs/redis -y
-# RUN apt-get update
-# RUN apt-get install redis -y
-#
-# RUN redis-server
-
-
 # React
 # RUN yarn run build
 

@@ -24,7 +24,7 @@ export default function BindForm(props) {
 
         if (!props.isBound) {
             requestData = Object.assign(bindData, requestData);
-            // remove when SSL is working
+            // todo remove when SSL is working
             requestData['useSSL'] = false;
         }
 
