@@ -12,10 +12,10 @@ class LogConsumer(WebsocketConsumer):
         self.group_name = ''
 
     def connect(self):
-        from .models import UserModel
-
         if self.scope['session'].exists(self.scope['session'].session_key):
             session_id = self.scope['session'].session_key
+
+            from .models import UserModel
             queryset = UserModel.objects.filter(sessionId=session_id)
             if queryset.exists():
                 user = queryset[0]
@@ -25,7 +25,12 @@ class LogConsumer(WebsocketConsumer):
 
     def disconnect(self, code):
         if self.scope['session'].exists(self.scope['session'].session_key):
-            async_to_sync(self.channel_layer.group_discard)(self.group_name, self.channel_name)
+            session_id = self.scope['session'].session_key
+
+            from .models import UserModel
+            queryset = UserModel.objects.filter(sessionId=session_id)
+            if queryset.exists():
+                async_to_sync(self.channel_layer.group_discard)(self.group_name, self.channel_name)
 
     def send_message(self, event):
         message = event['message']
