@@ -1,0 +1,11 @@
+# Deployment requirements
+Django==3.2.11
+djangorestframework~=3.13.1
+channels~=3.0.4
+asgiref~=3.4.1
+smpplib~=2.2.1
+channels_redis
+
+wheel==0.37.1
+psycopg2-binary==2.9.3
+daphne

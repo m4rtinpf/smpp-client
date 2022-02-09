@@ -3,37 +3,13 @@ import { Grid, Box, Typography } from '@mui/material';
 //import './App.css';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 
-const Messages = () => {
-    const [socketUrl, setSocketUrl] = useState('ws://127.0.0.1:8000/ws/api/');
-    const [messageHistory, setMessageHistory] = useState([]);
-
-    const {
-        sendMessage,
-        lastMessage,
-        readyState,
-    } = useWebSocket(socketUrl, { shouldReconnect: (closeEvent) => true, reconnectInterval: 1000, });
-
-    useEffect(() => {
-        if (lastMessage !== null) {
-            setMessageHistory(prev => prev.concat(lastMessage));
-        }
-    }, [lastMessage, setMessageHistory]);
-
-    const connectionStatus = {
-        [ReadyState.CONNECTING]: 'Connecting',
-        [ReadyState.OPEN]: 'Open',
-        [ReadyState.CLOSING]: 'Closing',
-        [ReadyState.CLOSED]: 'Closed',
-        [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
-    }[readyState];
-
-
+const Messages = (props) => {
     const messagesEndRef = useRef(null);
     const scrollToBottom = () => {
         messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     };
 
-    useEffect(scrollToBottom, [messageHistory]);
+    useEffect(scrollToBottom, [props.messageHistory]);
 
     return (
         <Box
@@ -44,7 +20,7 @@ const Messages = () => {
             }}
         >
             {
-                messageHistory.map((message, idx) => (
+                props.messageHistory.map((message, idx) => (
                     <Typography
                         key={idx}
                         style={{
@@ -64,7 +40,7 @@ const Messages = () => {
 };
 
 
-export default function LogComponent() {
+export default function LogComponent(props) {
 
     return (
         <React.Fragment>
@@ -80,7 +56,9 @@ export default function LogComponent() {
                     </Grid>
 
                     <Grid item xs={12}>
-                        <Messages />
+                        <Messages
+                            messageHistory={props.messageHistory}
+                        />
                     </Grid>
 
                 </Grid>
