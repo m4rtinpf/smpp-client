@@ -6,47 +6,41 @@ from queue import Queue
 import smpplib.gsm
 import smpplib.client
 import smpplib.consts
-from .models import UserModel, MessageModel, LogMessageModel, log_messages
 import ssl
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import json
-from .consumers import get_group_name_from_user_id
+from .consumers import get_group_name_from_session_id
 from django.core.exceptions import ObjectDoesNotExist
+from .models import users
 
 
 class TxThread(threading.Thread):
     def __init__(
-            self, system_id, hostname, password, port, system_type, use_ssl, reconnect, session_id, command, event,
+            self, session_id, command, event,
     ):
         super().__init__()
 
-        self.system_id = system_id
-        self.hostname = hostname
-        self.password = password
-        self.port = port
-        self.system_type = system_type
-        self.use_ssl = use_ssl
-        self.reconnect = reconnect
         self.session_id = session_id
         self.command = command
         self.event = event
 
-        self.user = UserModel.objects.get(sessionId=session_id)
-
     def run(self):
-        if self.use_ssl:
+        user = users[self.session_id]
+        if user['use_ssl']:
             # todo uncomment when SSL is working (and remove next line)
             # ssl_context = ssl.create_default_context()
             ssl_context = None
         else:
             ssl_context = None
 
+        logger_name = f"smpplib_logger_{self.session_id}"
+
         client = smpplib.client.Client(
-            host=self.hostname,
-            port=self.port,
+            host=user['hostname'],
+            port=user['port'],
             allow_unknown_opt_params=True,
-            logger_name=f'smpplib_logger_{self.user.id}',
+            logger_name=logger_name,
             ssl_context=ssl_context,
         )
 
@@ -54,10 +48,8 @@ class TxThread(threading.Thread):
             # format='%(asctime)s %(levelname)s %(module)s - %(funcName)s: %(message)s',
         )
 
-        log_messages[self.user.id] = Queue()
-
-        handler = LogHandler(client, self.user)
-        smpplib_logger = logging.getLogger(f'smpplib_logger_{self.user.id}')
+        handler = LogHandler(client, self.session_id)
+        smpplib_logger = logging.getLogger(logger_name)
         smpplib_logger.addHandler(handler)
         smpplib_logger.setLevel('DEBUG')
         # smpplib_logger.propagate = False
@@ -77,8 +69,8 @@ class TxThread(threading.Thread):
 
         try:
             resp = client.bind_transceiver(
-                system_id=self.system_id,
-                password=self.password,
+                system_id=user['system_id'],
+                password=user['password'],
             )
         except (smpplib.exceptions.ConnectionError, smpplib.exceptions.PDUError) as e:
             smpplib_logger.error(e)
@@ -87,50 +79,36 @@ class TxThread(threading.Thread):
 
         self.event.set()
 
-        rx_thread = RxThread(client, smpplib_logger, self.user)
+        rx_thread = RxThread(client, smpplib_logger, self.session_id)
         rx_thread.start()
 
-        q = Queue()
-
-        while not self.user.isDone:
-            queryset = MessageModel.objects.filter(user=self.user)
-            if queryset.exists():
-                for message in queryset:
-                    if message.bulkSubmitEnable:
-                        for i in range(message.bulkSubmitTimes):
-                            q.put(message)
-                    else:
-                        q.put(message)
-                    message.delete()
-
+        while not user['is_done']:
             try:
-                message = q.get(block=False)
+                message = user['message_queue'].get(block=False)
                 if message is not None:
                     # Two parts, UCS2, SMS with UDH
-                    parts, encoding_flag, msg_type_flag = smpplib.gsm.make_parts(message.messageText)
+                    parts, encoding_flag, msg_type_flag = smpplib.gsm.make_parts(message['message_text'])
 
                     for part in parts:
                         pdu = client.send_message(
-                            source_addr_ton=message.sourceAddrTON,
-                            source_addr_npi=message.sourceAddrNPI,
+                            source_addr_ton=message['source_addr_ton'],
+                            source_addr_npi=message['source_addr_npi'],
                             # Make sure it is a byte string, not unicode:
-                            source_addr=message.sourceAddr,
+                            source_addr=message['source_addr'],
 
-                            dest_addr_ton=message.destAddrTON,
-                            dest_addr_npi=message.destAddrNPI,
+                            dest_addr_ton=message['dest_addr_ton'],
+                            dest_addr_npi=message['dest_addr_npi'],
                             # Make sure these two params are byte strings, not unicode:
-                            destination_addr=message.destAddr,
+                            destination_addr=message['dest_addr'],
                             short_message=part,
 
-                            data_coding=message.dataCoding,
+                            data_coding=message['data_coding'],
                             esm_class=msg_type_flag,
                             registered_delivery=True,
                         )
 
             except queue.Empty:
                 pass
-
-            self.user.refresh_from_db()
 
         # todo fix when thread safe
         try:
@@ -144,11 +122,11 @@ class TxThread(threading.Thread):
 
 
 class RxThread(threading.Thread):
-    def __init__(self, client, smpplib_logger, user):
+    def __init__(self, client, smpplib_logger, session_id):
         super().__init__()
         self.client = client
         self.smpplib_logger = smpplib_logger
-        self.user = user
+        self.session_id = session_id
 
     def run(self):
         # todo fix when thread safe
@@ -161,22 +139,22 @@ class RxThread(threading.Thread):
                 self.smpplib_logger.warning('Disconnected with race condition')
                 break
             finally:
-                while not log_messages[self.user.id].empty():
+                while not users[self.session_id]['log_message_queue'].empty():
                     channel_layer = get_channel_layer()
                     async_to_sync(channel_layer.group_send)(
-                        get_group_name_from_user_id(self.user.id),
+                        get_group_name_from_session_id(self.session_id),
                         {
                             'type': 'send_message',
-                            'user_id': self.user.id,
+                            'session_id': self.session_id,
                         }
                     )
 
 
 class LogHandler(logging.Handler):
-    def __init__(self, client, user):
+    def __init__(self, client, session_id):
         super().__init__()
         self.client = client
-        self.user = user
+        self.session_id = session_id
 
     def emit(self, record):
         log_entry = self.format(record)
@@ -186,7 +164,7 @@ class LogHandler(logging.Handler):
         else:
             is_bound = False
 
-        log_messages[self.user.id].put(json.dumps({
+        users[self.session_id]['log_message_queue'].put(json.dumps({
             'logMessage': log_entry,
             'isBound': is_bound,
         }))
