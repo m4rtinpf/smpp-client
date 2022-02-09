@@ -33,5 +33,9 @@ class LogConsumer(WebsocketConsumer):
                 async_to_sync(self.channel_layer.group_discard)(self.group_name, self.channel_name)
 
     def send_message(self, event):
-        message = event['message']
-        self.send(message)
+        from .models import log_messages
+        user_id = event['user_id']
+
+        if not log_messages[user_id].empty():
+            log_message = log_messages[user_id].get()
+            self.send(log_message)

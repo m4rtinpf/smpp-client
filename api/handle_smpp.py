@@ -6,12 +6,13 @@ from queue import Queue
 import smpplib.gsm
 import smpplib.client
 import smpplib.consts
-from .models import UserModel, MessageModel
+from .models import UserModel, MessageModel, LogMessageModel, log_messages
 import ssl
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import json
 from .consumers import get_group_name_from_user_id
+from django.core.exceptions import ObjectDoesNotExist
 
 
 class TxThread(threading.Thread):
@@ -53,9 +54,9 @@ class TxThread(threading.Thread):
             # format='%(asctime)s %(levelname)s %(module)s - %(funcName)s: %(message)s',
         )
 
-        log_queue = Queue()
+        log_messages[self.user.id] = Queue()
 
-        handler = LogHandler(client, log_queue)
+        handler = LogHandler(client, self.user)
         smpplib_logger = logging.getLogger(f'smpplib_logger_{self.user.id}')
         smpplib_logger.addHandler(handler)
         smpplib_logger.setLevel('DEBUG')
@@ -86,7 +87,7 @@ class TxThread(threading.Thread):
 
         self.event.set()
 
-        rx_thread = RxThread(client, smpplib_logger, log_queue, self.user.id)
+        rx_thread = RxThread(client, smpplib_logger, self.user)
         rx_thread.start()
 
         q = Queue()
@@ -143,12 +144,11 @@ class TxThread(threading.Thread):
 
 
 class RxThread(threading.Thread):
-    def __init__(self, client, smpplib_logger, log_queue, user_id):
+    def __init__(self, client, smpplib_logger, user):
         super().__init__()
         self.client = client
         self.smpplib_logger = smpplib_logger
-        self.log_queue = log_queue
-        self.user_id = user_id
+        self.user = user
 
     def run(self):
         # todo fix when thread safe
@@ -161,24 +161,22 @@ class RxThread(threading.Thread):
                 self.smpplib_logger.warning('Disconnected with race condition')
                 break
             finally:
-                while not self.log_queue.empty():
-                    log_message = self.log_queue.get(block=False)
-                    if log_message is not None:
-                        channel_layer = get_channel_layer()
-
-                        async_to_sync(channel_layer.group_send)(
-                            get_group_name_from_user_id(self.user_id),
-                            {'type': 'send_message', 'message': json.dumps(
-                                log_message
-                            )}
-                        )
+                while not log_messages[self.user.id].empty():
+                    channel_layer = get_channel_layer()
+                    async_to_sync(channel_layer.group_send)(
+                        get_group_name_from_user_id(self.user.id),
+                        {
+                            'type': 'send_message',
+                            'user_id': self.user.id,
+                        }
+                    )
 
 
 class LogHandler(logging.Handler):
-    def __init__(self, client, log_queue):
+    def __init__(self, client, user):
         super().__init__()
         self.client = client
-        self.queue = log_queue
+        self.user = user
 
     def emit(self, record):
         log_entry = self.format(record)
@@ -188,4 +186,7 @@ class LogHandler(logging.Handler):
         else:
             is_bound = False
 
-        self.queue.put({'logMessage': log_entry, 'isBound': is_bound})
+        log_messages[self.user.id].put(json.dumps({
+            'logMessage': log_entry,
+            'isBound': is_bound,
+        }))
