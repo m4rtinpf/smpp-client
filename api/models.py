@@ -1,6 +1,8 @@
 from django.db import models
 from .consts import FIELDS_CONSTRAINTS
 
+log_messages = dict()
+
 
 class UserModel(models.Model):
     sessionId = models.CharField(max_length=50, unique=True)
@@ -29,3 +31,9 @@ class MessageModel(models.Model):
     dataCoding = models.IntegerField()
     submitMode = models.CharField(max_length=20)  # todo max_length?
     readyToBeSent = models.BooleanField(blank=False, default=False)
+
+
+class LogMessageModel(models.Model):
+    user = models.ForeignKey(UserModel, on_delete=models.CASCADE)
+    messageText = models.CharField(max_length=1000)
+    isBound = models.BooleanField(blank=False, default=False)

@@ -32,8 +32,8 @@ ADD . /app
 # RUN yarn run build
 
 # Django migrations and collecting static files
-RUN /env/bin/python3 manage.py makemigrations
-RUN /env/bin/python3 manage.py migrate --noinput
+# RUN /env/bin/python3 manage.py makemigrations
+# RUN /env/bin/python3 manage.py migrate --noinput
 # RUN /env/bin/python3 manage.py migrate --noinput --fake
 # RUN /env/bin/python3 manage.py migrate --noinput --fake-initial
 # RUN /env/bin/python3 manage.py collectstatic --noinput
