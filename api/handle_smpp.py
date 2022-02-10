@@ -15,13 +15,12 @@ import time
 
 class TxThread(threading.Thread):
     def __init__(
-            self, session_id, command, event,
+            self, session_id, command,
     ):
         super().__init__()
 
         self.session_id = session_id
         self.command = command
-        self.event = event
 
     def run(self):
         user = users[self.session_id]
@@ -62,7 +61,7 @@ class TxThread(threading.Thread):
             client.connect()
         except smpplib.exceptions.ConnectionError as e:
             smpplib_logger.error(e)
-            self.event.set()
+            # self.event.set()
             return
 
         try:
@@ -72,10 +71,10 @@ class TxThread(threading.Thread):
             )
         except (smpplib.exceptions.ConnectionError, smpplib.exceptions.PDUError) as e:
             smpplib_logger.error(e)
-            self.event.set()
+            # self.event.set()
             return
 
-        self.event.set()
+        # self.event.set()
 
         rx_thread = RxThread(client, smpplib_logger, self.session_id)
         rx_thread.start()
@@ -127,6 +126,7 @@ class RxThread(threading.Thread):
         self.session_id = session_id
 
     def run(self):
+        channel_layer = get_channel_layer()
         # todo fix when thread safe
         while True:
             try:
@@ -137,7 +137,6 @@ class RxThread(threading.Thread):
                 self.smpplib_logger.warning('Disconnected with race condition')
                 break
             finally:
-                channel_layer = get_channel_layer()
                 if not users[self.session_id]['log_message_queue'].empty():
                     async_to_sync(channel_layer.group_send)(
                         get_group_name_from_session_id(self.session_id),
@@ -161,6 +160,8 @@ class LogHandler(logging.Handler):
             is_bound = True
         else:
             is_bound = False
+
+        users[self.session_id]['is_bound'] = is_bound
 
         # log_entry = f"{self.session_id} - {log_entry}"
 

@@ -1,4 +1,5 @@
-def is_valid_bind_request(request, request_type):
+def is_valid_bind_request(request):
+    # request_type=request['command'].lower()
     return True
 
 
