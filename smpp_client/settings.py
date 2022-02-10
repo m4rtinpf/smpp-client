@@ -27,19 +27,6 @@ if 'IS_DEPLOYED' in os.environ:
     DEBUG = False
     # DEBUG = True
 
-    DATABASES = {
-        'default': {
-            # If you are using Cloud SQL for MySQL rather than PostgreSQL, set
-            # 'ENGINE': 'django.db.backends.mysql' instead of the following.
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('DATABASE_NAME'),
-            'USER': os.getenv('DATABASE_USER'),
-            'PASSWORD': os.getenv('DATABASE_PASSWORD'),
-            'HOST': '127.0.0.1',
-            'PORT': '5432',
-        }
-    }
-
     # todo fix
     ALLOWED_HOSTS = ['*']
 
@@ -53,13 +40,6 @@ else:
     MY_SECRET_KEY = 'django-insecure-so72wicdd-#nyft$z2sb+4pf#qf6h_2nyrg644jv#k1fw096li'
 
     DEBUG = True
-
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
 
     ALLOWED_HOSTS = []
 
@@ -83,6 +63,8 @@ INSTALLED_APPS = [
     'frontend.apps.FrontendConfig',
     'channels',
 ]
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -114,9 +96,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'smpp_client.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/3.2/ref/settings/#databases
-
 ASGI_APPLICATION = 'smpp_client.asgi.application'
 
 CHANNEL_LAYERS = {
@@ -132,20 +111,20 @@ CHANNEL_LAYERS = {
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
+# AUTH_PASSWORD_VALIDATORS = [
+#     {
+#         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+#     },
+#     {
+#         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+#     },
+#     {
+#         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+#     },
+#     {
+#         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+#     },
+# ]
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
@@ -160,7 +139,8 @@ USE_L10N = True
 
 USE_TZ = True
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': [],
+#     'DEFAULT_PERMISSION_CLASSES': [],
+#     'UNAUTHENTICATED_USER': None,
+# }

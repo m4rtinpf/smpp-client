@@ -49,28 +49,6 @@ spec:
           # off in production.
           imagePullPolicy: Always
           env:
-            # [START cloudsql_secrets]
-            - name: DATABASE_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: cloudsql
-                  key: database
-            - name: DATABASE_USER
-              valueFrom:
-                secretKeyRef:
-                  name: cloudsql
-                  key: username
-            - name: DATABASE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: cloudsql
-                  key: password
-            #            - name: REDISHOST
-            #              valueFrom:
-            #                configMapKeyRef:
-            #                  name: redishost
-            #                  key: REDISHOST
-            # [END cloudsql_secrets]
             - name: IS_DEPLOYED
               value: "True"
             - name: DJANGO_SECRET_KEY
@@ -78,39 +56,12 @@ spec:
           ports:
             - containerPort: 8080
 
-        # [START proxy_container]
-        - image: gcr.io/cloudsql-docker/gce-proxy:1.16
-          name: cloudsql-proxy
-          command: [ "/cloud_sql_proxy", "--dir=/cloudsql",
-                     "-instances=smpp-client-338121:southamerica-east1:postgresql-instance=tcp:5432",
-                     "-credential_file=/secrets/cloudsql/credentials.json" ]
-          volumeMounts:
-            - name: cloudsql-oauth-credentials
-              mountPath: /secrets/cloudsql
-              readOnly: true
-            - name: ssl-certs
-              mountPath: /etc/ssl/certs
-            - name: cloudsql
-              mountPath: /cloudsql
-        # [END proxy_container]
-
         # [START redis_container]
         - image: redis:5
           name: redis
           ports:
             - containerPort: 6379
       # [END redis_container]
-      # [START volumes]
-      volumes:
-        - name: cloudsql-oauth-credentials
-          secret:
-            secretName: cloudsql-oauth-credentials
-        - name: ssl-certs
-          hostPath:
-            path: /etc/ssl/certs
-        - name: cloudsql
-          emptyDir: { }
-      # [END volumes]        
 # [END kubernetes_deployment]
 
 ---

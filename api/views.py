@@ -45,7 +45,7 @@ class UserView(APIView):
                     'is_done': False,
                     'message_queue': Queue(),
                     'log_message_queue': Queue(),
-                    'is_bound': False,
+                    'is_bound': True,
                 }
 
                 self.bind_user(session_id)
