@@ -123,6 +123,9 @@ def is_valid_bind_request(request_data):
                 except Exception:
                     return False
 
+                if 'min_length' in v and len(field) < v['min_length']:
+                    return False
+
                 if 'max_length' in v and len(field) > v['max_length']:
                     return False
 
@@ -153,6 +156,9 @@ def is_valid_message_request(request_data):
             try:
                 field = v['type'](request_data[k])
             except Exception:
+                return False
+
+            if 'min_length' in v and len(field) < v['min_length']:
                 return False
 
             if 'max_length' in v and len(field) > v['max_length']:
