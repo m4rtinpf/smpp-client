@@ -1,10 +1,22 @@
 import socket
+import phonenumbers
+import inflection
 
 
 def is_valid_hostname(hostname):
     hostname = str(hostname)
     socket.gethostbyname(hostname)
     return hostname
+
+
+def is_valid_phone_number(phone_number_string):
+    phone_number_string = str(phone_number_string)
+    if not phone_number_string.startswith('+'):
+        phone_number_string = '+' + phone_number_string
+    phone_number = phonenumbers.parse(phone_number_string, None)
+    if not phonenumbers.is_valid_number(phone_number):
+        return False
+    return phonenumbers.format_number(phone_number, phonenumbers.PhoneNumberFormat.E164)
 
 
 BIND_FIELDS = {
@@ -46,49 +58,127 @@ BIND_FIELDS = {
     'disconnect': dict(),
 }
 
+MESSAGE_FIELDS = {
+    'messageText': {
+        'type': str,
+        'min_length': 1,
+        'max_length': 160,
+    },
+    'sourceAddr': {
+        'type': is_valid_phone_number,
+        'min_length': 1,
+        'max_length': 15,
+    },
+    'sourceAddrTON': {
+        'type': int,
+        'min_value': 0,
+        'max_value': 9,
+        'default': 0,
+    },
+    'sourceAddrNPI': {
+        'type': int,
+        'min_value': 0,
+        'max_value': 9,
+        'default': 0,
+    },
+    'serviceType': {
+        'type': str,
+        'max_length': 6,
+        'default': 0,
+    },
+    'bulkSubmitEnable': {
+        'type': bool,
+        'default': False,
+    },
+    'bulkSubmitTimes': {
+        'type': int,
+        'min_value': 0,
+        'default': 0,
+    },
+    'dataCoding': {
+        'type': int,
+        'min_value': 0,
+        'max_value': 8,
+        'default': 0,
+    },
+    'submitMode': {
+        'type': str,
+        'default': 'shortMessage',
+    },
+}
+MESSAGE_FIELDS['destAddr'] = MESSAGE_FIELDS['sourceAddr']
+MESSAGE_FIELDS['destAddrTON'] = MESSAGE_FIELDS['sourceAddrTON']
+MESSAGE_FIELDS['destAddrNPI'] = MESSAGE_FIELDS['sourceAddrNPI']
+
 
 def is_valid_bind_request(request_data):
     if 'command' in request_data and request_data['command'] in BIND_FIELDS:
         command = request_data['command']
+
+        formatted_request_data = {'command': command}
         for k, v in BIND_FIELDS[command].items():
             if k in request_data:
                 try:
-                    request_data[k] = v['type'](request_data[k])
+                    field = v['type'](request_data[k])
                 except Exception:
                     return False
 
-                if 'max_length' in v and len(request_data[k]) > v['max_length']:
+                if 'max_length' in v and len(field) > v['max_length']:
                     return False
 
-                if 'min_value' in v and request_data[k] < v['min_value']:
+                if 'min_value' in v and field < v['min_value']:
                     return False
 
-                if 'max_value' in v and request_data[k] > v['max_value']:
+                if 'max_value' in v and field > v['max_value']:
                     return False
 
             else:
                 if 'min_length' in v:
                     return False
 
-                request_data[k] = v['default']
+                field = v['default']
 
-        return request_data
+            formatted_request_data.update({inflection.underscore(k): field})
+
+        return formatted_request_data
 
     return False
 
 
 def is_valid_message_request(request_data):
-    return {
-        'message_text': request_data['messageText'],
-        'source_addr': request_data['sourceAddr'],
-        'source_addr_ton': int(request_data['sourceAddrTON']),
-        'source_addr_npi': int(request_data['sourceAddrNPI']),
-        'dest_addr': request_data['destAddr'],
-        'dest_addr_ton': int(request_data['destAddrTON']),
-        'dest_addr_npi': int(request_data['destAddrNPI']),
-        'service_type': int(request_data['serviceType']),
-        'bulk_submit_enable': request_data['bulkSubmitEnable'],
-        'bulk_submit_times': int(request_data['bulkSubmitTimes']),
-        'data_coding': int(request_data['dataCoding']),
-        'submit_mode': request_data['submitMode'],
-    }
+    formatted_request_data = dict()
+
+    for k, v in MESSAGE_FIELDS.items():
+        if k in request_data:
+            try:
+                field = v['type'](request_data[k])
+            except Exception:
+                return False
+
+            if 'max_length' in v and len(field) > v['max_length']:
+                return False
+
+            if 'min_value' in v and field < v['min_value']:
+                return False
+
+            if 'max_value' in v and field > v['max_value']:
+                return False
+
+        else:
+            if 'min_length' in v:
+                return False
+
+            field = v['default']
+
+        formatted_request_data.update({inflection.underscore(k): field})
+
+    if formatted_request_data['bulk_submit_enable'] and formatted_request_data['bulk_submit_times'] == 0:
+        return False
+
+    if formatted_request_data['data_coding'] not in [0, 3, 8]:
+        return False
+
+    if formatted_request_data['submit_mode'] != 'shortMessage':
+        return False
+
+    return formatted_request_data
