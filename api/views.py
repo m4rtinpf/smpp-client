@@ -1,6 +1,5 @@
 import threading
-from django.shortcuts import render
-from rest_framework import generics, status
+from rest_framework import status
 from .models import users
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -12,17 +11,11 @@ from queue import Queue
 class UserView(APIView):
     @staticmethod
     def bind_user(session_id):
-        evt = threading.Event()
-
-        tx_thread = TxThread(session_id=session_id, command='bind', event=evt)
-
+        tx_thread = TxThread(session_id=session_id, command='bind')
         tx_thread.start()
 
-        # Wait for tx_thread to finish setting up the binding
-        # evt.wait()
-
     @staticmethod
-    def unbind_user(user):
+    def unbind_user(session_id):
         pass
 
     def post(self, request):
@@ -33,10 +26,16 @@ class UserView(APIView):
 
         print(f'Bind request: {request.data}')
 
-        command = self.request.data['command'].lower()
+        bind_request = is_valid_bind_request(request.data)
 
-        if command == 'connect':
-            if is_valid_bind_request(request.data, command):
+        if bind_request:
+            command = bind_request['command']
+
+            if command == 'connect':
+                if session_id in users and users[session_id]['is_bound']:
+                    return Response({'error': 'trying to connect in the bound state'},
+                                    status=status.HTTP_400_BAD_REQUEST)
+
                 users[session_id] = {
                     'system_id': request.data.get('systemId'),
                     'hostname': request.data.get('hostname'),
@@ -48,15 +47,19 @@ class UserView(APIView):
                     'is_done': False,
                     'message_queue': Queue(),
                     'log_message_queue': Queue(),
+                    'is_bound': True,
                 }
 
                 self.bind_user(session_id)
 
                 return Response({}, status=status.HTTP_200_OK)
 
-        elif command == 'disconnect':
-            if is_valid_bind_request(request.data, command):
+            elif command == 'disconnect':
                 if session_id in users:
+                    if not users[session_id]['is_bound']:
+                        return Response({'error': 'trying to disconnect in the unbound state'},
+                                        status=status.HTTP_400_BAD_REQUEST)
+
                     users[session_id]['is_done'] = True
 
                     self.unbind_user(session_id)
@@ -80,9 +83,14 @@ class CreateMessageView(APIView):
             if session_id not in users:
                 return Response({'error': "user doesn't exist"}, status=status.HTTP_204_NO_CONTENT)
             else:
-                user = users[session_id]
                 message = is_valid_message_request(request.data)
                 if message:
+                    if not users[session_id]['is_bound']:
+                        return Response({'error': 'trying to send a message in the unbound state'},
+                                        status=status.HTTP_400_BAD_REQUEST)
+
+                    user = users[session_id]
+
                     if message['bulk_submit_enable']:
                         for i in range(message['bulk_submit_times']):
                             user['message_queue'].put(message)

@@ -1,16 +1,3 @@
-#	Copyright 2015, Google, Inc.
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 # [START docker]
 
 # The Google App Engine python runtime is Debian Jessie with Python installed
@@ -30,13 +17,6 @@ ADD . /app
 
 # React
 # RUN yarn run build
-
-# Django migrations and collecting static files
-# RUN /env/bin/python3 manage.py makemigrations
-# RUN /env/bin/python3 manage.py migrate --noinput
-# RUN /env/bin/python3 manage.py migrate --noinput --fake
-# RUN /env/bin/python3 manage.py migrate --noinput --fake-initial
-# RUN /env/bin/python3 manage.py collectstatic --noinput
 
 # Start Daphne
 ENV DJANGO_SETTINGS_MODULE="smpp_client.settings"

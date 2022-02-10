@@ -24,8 +24,6 @@ export default function BindForm(props) {
 
         if (!props.isBound) {
             requestData = Object.assign(bindData, requestData);
-            // todo remove when SSL is working
-            requestData['useSSL'] = false;
         }
 
         const requestOptions = {
@@ -45,6 +43,10 @@ export default function BindForm(props) {
     const isValidHostname = (string) => {
         let url;
         let regex = /^\w+:\/\//;
+
+        if (props.isBound) {
+            return undefined;
+        }
 
         try {
             if (!regex.test(string)) {
@@ -77,10 +79,11 @@ export default function BindForm(props) {
                             label="SystemId *"
                             fullWidth={true}
                             size="small"
-                            {...register("systemId", {
-                                required: true,
-                                maxLength: MAX_SYSTEM_ID_LENGTH,
-                            })}
+                            {...register("systemId",
+                                {
+                                    required: !props.isBound,
+                                    maxLength: MAX_SYSTEM_ID_LENGTH,
+                                })}
                             helperText={
                                 {
                                     required: "Required",
@@ -99,7 +102,7 @@ export default function BindForm(props) {
                             fullWidth={true}
                             size="small"
                             {...register("hostname", {
-                                required: true,
+                                required: !props.isBound,
                                 validate: isValidHostname,
                             })}
                             helperText={
@@ -122,7 +125,7 @@ export default function BindForm(props) {
                             fullWidth={true}
                             size="small"
                             {...register("password", {
-                                required: true,
+                                required: !props.isBound,
                                 maxLength: MAX_PASSWORD_LENGTH,
                             })}
                             helperText={
@@ -145,7 +148,7 @@ export default function BindForm(props) {
                             size="small"
                             defaultValue={DEFAULT_PORT}
                             {...register("port", {
-                                required: true,
+                                required: !props.isBound,
                                 min: MIN_PORT,
                                 max: MAX_PORT,
                             })}
@@ -168,7 +171,7 @@ export default function BindForm(props) {
                             fullWidth={true}
                             size="small"
                             {...register("systemType", {
-                                required: true,
+                                required: !props.isBound,
                                 maxLength: MAX_SYSTEM_TYPE_LENGTH,
                             })}
                             helperText={
@@ -208,6 +211,8 @@ export default function BindForm(props) {
                             <FormControlLabel
                                 control={<Switch size="small" />}
                                 label="Reconnect"
+                                // todo remove when reconnect is working
+                                disabled
                                 {...register("reconnect")}
                             // display="flex"
                             // alignItems="center"

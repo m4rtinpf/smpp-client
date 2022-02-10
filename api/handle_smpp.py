@@ -1,8 +1,6 @@
 import queue
 import threading
 import logging
-import sys
-from queue import Queue
 import smpplib.gsm
 import smpplib.client
 import smpplib.consts
@@ -11,19 +9,17 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import json
 from .consumers import get_group_name_from_session_id
-from django.core.exceptions import ObjectDoesNotExist
 from .models import users
 
 
 class TxThread(threading.Thread):
     def __init__(
-            self, session_id, command, event,
+            self, session_id, command,
     ):
         super().__init__()
 
         self.session_id = session_id
         self.command = command
-        self.event = event
 
     def run(self):
         user = users[self.session_id]
@@ -56,15 +52,15 @@ class TxThread(threading.Thread):
 
         # Print when obtain message_id
         client.set_message_sent_handler(
-            lambda pdu: sys.stdout.write('sent {} {}\n'.format(pdu.sequence, pdu.message_id)))
+            lambda pdu: smpplib_logger.info('Sent {} {}\n'.format(pdu.sequence, pdu.message_id)))
         client.set_message_received_handler(
-            lambda pdu: sys.stdout.write('delivered {}\n'.format(pdu.receipted_message_id)))
+            lambda pdu: smpplib_logger.info('Delivered {}\n'.format(pdu.receipted_message_id)))
 
         try:
             client.connect()
         except smpplib.exceptions.ConnectionError as e:
             smpplib_logger.error(e)
-            self.event.set()
+            # self.event.set()
             return
 
         try:
@@ -74,10 +70,10 @@ class TxThread(threading.Thread):
             )
         except (smpplib.exceptions.ConnectionError, smpplib.exceptions.PDUError) as e:
             smpplib_logger.error(e)
-            self.event.set()
+            # self.event.set()
             return
 
-        self.event.set()
+        # self.event.set()
 
         rx_thread = RxThread(client, smpplib_logger, self.session_id)
         rx_thread.start()
@@ -129,6 +125,7 @@ class RxThread(threading.Thread):
         self.session_id = session_id
 
     def run(self):
+        channel_layer = get_channel_layer()
         # todo fix when thread safe
         while True:
             try:
@@ -139,15 +136,14 @@ class RxThread(threading.Thread):
                 self.smpplib_logger.warning('Disconnected with race condition')
                 break
             finally:
-                while not users[self.session_id]['log_message_queue'].empty():
-                    channel_layer = get_channel_layer()
+                if not users[self.session_id]['log_message_queue'].empty():
                     async_to_sync(channel_layer.group_send)(
                         get_group_name_from_session_id(self.session_id),
                         {
                             'type': 'send_message',
-                            'session_id': self.session_id,
                         }
                     )
+                    # time.sleep(0.1)
 
 
 class LogHandler(logging.Handler):
@@ -163,6 +159,10 @@ class LogHandler(logging.Handler):
             is_bound = True
         else:
             is_bound = False
+
+        users[self.session_id]['is_bound'] = is_bound
+
+        # log_entry = f"{self.session_id} - {log_entry}"
 
         users[self.session_id]['log_message_queue'].put(json.dumps({
             'logMessage': log_entry,
