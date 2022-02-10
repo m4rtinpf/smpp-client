@@ -26,8 +26,10 @@ class UserView(APIView):
 
         print(f'Bind request: {request.data}')
 
-        if is_valid_bind_request(request.data):
-            command = self.request.data['command'].lower()
+        bind_request = is_valid_bind_request(request.data)
+
+        if bind_request:
+            command = bind_request['command']
 
             if command == 'connect':
                 if session_id in users and users[session_id]['is_bound']:

@@ -10,7 +10,6 @@ from asgiref.sync import async_to_sync
 import json
 from .consumers import get_group_name_from_session_id
 from .models import users
-import time
 
 
 class TxThread(threading.Thread):
