@@ -43,7 +43,7 @@ spec:
       containers:
         - name: polls-app
           # Replace  with your project ID or use `make template`
-          image: gcr.io/smpp-client-338121/polls
+          image: <container-image>
           # This setting makes nodes pull the docker image every time before
           # starting the pod. This is useful when debugging, but should be turned
           # off in production.

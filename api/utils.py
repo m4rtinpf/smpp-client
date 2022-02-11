@@ -1,15 +1,29 @@
 import socket
 import phonenumbers
 import inflection
+from typing import Union
 
 
-def is_valid_hostname(hostname):
+def is_valid_hostname(hostname: str) -> str:
+    """
+    Check if `hostname` is valid.
+
+    :param hostname:
+    :return:
+    """
     hostname = str(hostname)
     socket.gethostbyname(hostname)
     return hostname
 
 
-def is_valid_phone_number(phone_number_string):
+def is_valid_phone_number(phone_number_string: str) -> Union[str, bool]:
+    """
+    Check if `phone_number_string` is valid.
+    Assumes that it's an international number, returns it in E164 format.
+
+    :param phone_number_string:
+    :return:
+    """
     phone_number_string = str(phone_number_string)
     if not phone_number_string.startswith('+'):
         phone_number_string = '+' + phone_number_string
@@ -111,7 +125,13 @@ MESSAGE_FIELDS['destAddrTON'] = MESSAGE_FIELDS['sourceAddrTON']
 MESSAGE_FIELDS['destAddrNPI'] = MESSAGE_FIELDS['sourceAddrNPI']
 
 
-def is_valid_bind_request(request_data):
+def is_valid_bind_request(request_data: dict) -> Union[dict, bool]:
+    """
+    Check is a bind request is valid.
+
+    :param request_data:
+    :return:
+    """
     if 'command' in request_data and request_data['command'] in BIND_FIELDS:
         command = request_data['command']
 
@@ -148,7 +168,13 @@ def is_valid_bind_request(request_data):
     return False
 
 
-def is_valid_message_request(request_data):
+def is_valid_message_request(request_data: dict) -> Union[dict, bool]:
+    """
+    Check if a message request is valid.
+
+    :param request_data:
+    :return:
+    """
     formatted_request_data = dict()
 
     for k, v in MESSAGE_FIELDS.items():

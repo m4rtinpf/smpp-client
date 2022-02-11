@@ -1,0 +1,15 @@
+GCP_PROJECT_ID=smpp-client-338121
+GCP_MEDIA_BUCKET=media-bucket
+
+# Cloud Storage bucket gsutil URI
+STATIC_GSUTIL=gs://"$GCP_PROJECT_ID"_"$GCP_MEDIA_BUCKET"/static
+
+# Cloud Storage bucket public URL
+STATIC_URL=http://storage.googleapis.com/"$GCP_PROJECT_ID"_"$GCP_MEDIA_BUCKET"/static/
+
+# Docker container URL
+DOCKER=gcr.io/smpp-client-338121/polls
+
+# Static files path
+STATIC_PATH=./frontend/static
+

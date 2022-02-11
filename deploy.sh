@@ -1,8 +1,15 @@
+# Run with `-n` to disallow caching
+if [ "$1" = -n ]; then
+  BUCKET_HEADER='-h "Cache-Control:no-store"'
+else
+  BUCKET_HEADER=
+fi
+
+. deploy_config
 (cd frontend && yarn run build)
-# Remove the header in production `-h "Cache-Control:no-store"`
-gsutil -m -h "Cache-Control:no-store" rsync -r ./frontend/static gs://smpp-client-338121_media-bucket/static
-docker build -t gcr.io/smpp-client-338121/polls .
-docker push gcr.io/smpp-client-338121/polls
-kubectl apply -f polls.yaml
+gsutil -m "$BUCKET_HEADER" rsync -r "$STATIC_PATH" "$BUCKET"
+docker build -t "$DOCKER" .
+docker push "$DOCKER"
+sed -e "s,<container-image>,$DOCKER,g" polls.yaml | kubectl apply -f -
 kubectl rollout restart deployment.apps/polls
 watch kubectl get pods
