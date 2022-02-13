@@ -5,11 +5,19 @@ else
   BUCKET_HEADER=
 fi
 
-. deploy_config
-(cd frontend && yarn run build)
+# Set environment variables
+set -a
+. ./config
+set +a
+
+# Update the static content to the bucket
 gsutil -m "$BUCKET_HEADER" rsync -r "$STATIC_PATH" "$BUCKET"
-docker build -t "$DOCKER" .
+
+# Push the docker image
 docker push "$DOCKER"
-sed -e "s,<container-image>,$DOCKER,g" polls.yaml | kubectl apply -f -
+
+# Apply the kubernetes config, restart the deployment, watch the state, and show the logs
+envsubst < polls.yaml | kubectl apply -f -
 kubectl rollout restart deployment.apps/polls
 watch kubectl get pods
+kubectl logs -f deploy/polls polls-app

@@ -8,8 +8,10 @@ STATIC_GSUTIL=gs://"$GCP_PROJECT_ID"_"$GCP_MEDIA_BUCKET"/static
 STATIC_URL=http://storage.googleapis.com/"$GCP_PROJECT_ID"_"$GCP_MEDIA_BUCKET"/static/
 
 # Docker container URL
-DOCKER=gcr.io/smpp-client-338121/polls
+DOCKER_CONTAINER=gcr.io/smpp-client-338121/polls
 
 # Static files path
 STATIC_PATH=./frontend/static
+
+DJANGO_SECRET_KEY=nv#43-&*2fki+!xo66a42+^5s5$b@-m&u(j&v&!i*-5c6m$e6$
 

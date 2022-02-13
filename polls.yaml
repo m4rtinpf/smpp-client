@@ -43,7 +43,7 @@ spec:
       containers:
         - name: polls-app
           # Replace  with your project ID or use `make template`
-          image: <container-image>
+          image: $DOCKER_CONTAINER
           # This setting makes nodes pull the docker image every time before
           # starting the pod. This is useful when debugging, but should be turned
           # off in production.
@@ -52,7 +52,7 @@ spec:
             - name: IS_DEPLOYED
               value: "True"
             - name: DJANGO_SECRET_KEY
-              value: "nv#43-&*2fki+!xo66a42+^5s5$b@-m&u(j&v&!i*-5c6m$e6$"
+              value: "$DJANGO_SECRET_KEY"
           ports:
             - containerPort: 8080
 

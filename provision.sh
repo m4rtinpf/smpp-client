@@ -1,7 +1,9 @@
 # Script based on: https://cloud.google.com/python/django/kubernetes-engine
 
-# Load variables
-. deploy_config
+# Set environment variables
+set -a
+. ./config
+set +a
 
 # Initial steps
 echo 'In the Google Cloud Console, on the project selector page, select or create a Google Cloud project.'
@@ -18,24 +20,17 @@ echo -e 'https://console.cloud.google.com/flows/enableapi?apiid=compute.googleap
 read -p 'Press Enter when done ' -r
 echo -e '\n'
 
+# Install docker (based on https://docs.docker.com/engine/install/ubuntu/#install-using-the-convenience-script)
+sudo apt-get remove docker docker-engine docker.io containerd runc
+curl -fsSL https://get.docker.com -o ~/get-docker.sh
+sudo . ~/get-docker.sh
+
 # Install the gcloud CLI from versioned archives (based on: https://cloud.google.com/sdk/docs/downloads-versioned-archives)
 GCLOUD_CLI_FILENAME=google-cloud-sdk-372.0.0-linux-$(uname -m).tar.gz
 (cd && curl https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/"$GCLOUD_CLI_FILENAME")
 (cd && tar -xzf GCLOUD_CLI_FILENAME)
 (cd ~/google-cloud-sdk/ && . install.sh)
 ~/google-cloud-sdk/bin/gcloud init
-
-# Install requirements
-python3 -m venv venv
-source venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
-(cd frontend && yarn install)
-
-# Make migrations
-python3 manage.py makemigrations
-python3 manage.py migrate
-python3 manage.py collectstatic
 
 # Create a Cloud Storage bucket and make it publicly readable
 gsutil mb gs://"$GCP_PROJECT_ID"_"$GCP_MEDIA_BUCKET"
@@ -48,7 +43,7 @@ echo -e 'https://console.cloud.google.com/kubernetes/list'
 echo 'When you use GKE for the first time in a project, you need to wait for the "Kubernetes Engine is getting ready. This may take a minute or more" message to disappear.'
 read -p 'Press Enter when done ' -r
 
-# Create a GKE cluster:
+# Create a GKE cluster
 gcloud container clusters create polls \
   --scopes "https://www.googleapis.com/auth/userinfo.email","cloud-platform" \
   --num-nodes 4 --zone "us-central1-a"
@@ -60,7 +55,7 @@ gcloud container clusters get-credentials polls --zone "us-central1-a"
 gcloud auth configure-docker
 
 # Create the GKE resource
-kubectl create -f polls.yaml
+envsubst < polls.yaml | kubectl create -f -
 
 # After the pods are ready, you can get the public IP address of the load balancer
 kubectl get services polls
