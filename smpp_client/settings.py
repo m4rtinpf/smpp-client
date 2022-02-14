@@ -35,7 +35,7 @@ if 'IS_DEPLOYED' in os.environ:
 
     STATIC_ROOT = Path('frontend')
 
-    STATIC_URL = os.getenv('STATIC_URL')
+    MY_STATIC_URL = os.getenv('STATIC_URL')
 else:
     MY_SECRET_KEY = 'django-insecure-so72wicdd-#nyft$z2sb+4pf#qf6h_2nyrg644jv#k1fw096li'
 
@@ -45,7 +45,9 @@ else:
 
     STATIC_ROOT = Path.joinpath(BASE_DIR, 'frontend')
 
-    STATIC_URL = '/static/'
+    MY_STATIC_URL = '/static/'
+
+STATIC_URL = MY_STATIC_URL
 
 SECRET_KEY = MY_SECRET_KEY
 
