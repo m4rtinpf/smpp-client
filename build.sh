@@ -1,3 +1,6 @@
+# Terminate script on errors
+set -e
+
 # Set environment variables
 set -a
 . ./config
