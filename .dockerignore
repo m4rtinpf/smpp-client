@@ -23,3 +23,6 @@ collectstatic
 static
 !static/build/webpack-stats.json
 # env rather serve env file as a kubernetes configmap or secret
+
+# project
+config
