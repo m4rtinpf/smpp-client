@@ -107,6 +107,7 @@ MESSAGE_FIELDS = {
     'bulkSubmitTimes': {
         'type': int,
         'min_value': 0,
+        'max_value': 50,
         'default': 0,
     },
     'dataCoding': {

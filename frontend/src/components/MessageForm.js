@@ -97,6 +97,8 @@ export default function MessageForm(props) {
         // todo fix this (set default values for useForm)
         if (messageData['bulkSubmitTimes'] === undefined) {
             messageData['bulkSubmitTimes'] = 0;
+        } else if (messageData['bulkSubmitTimes'] > 50) {
+            messageData['bulkSubmitTimes'] = 50;
         }
 
         const requestOptions = {
