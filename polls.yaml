@@ -49,10 +49,10 @@ spec:
           # off in production.
           imagePullPolicy: Always
           env:
-            - name: IS_DEPLOYED
-              value: "True"
             - name: DJANGO_SECRET_KEY
               value: "$DJANGO_SECRET_KEY"
+            - name: STATIC_URL
+              value: "$STATIC_URL"
           ports:
             - containerPort: 8080
 
