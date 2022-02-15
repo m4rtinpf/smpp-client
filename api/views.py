@@ -9,13 +9,22 @@ from queue import Queue
 
 
 class UserView(APIView):
+    """
+    Handles the connect/disconnect requests from the user.
+    """
+
     @staticmethod
-    def bind_user(session_id):
+    def bind_user(session_id: str) -> None:
+        """
+        Binds the user.
+
+        :param session_id:
+        """
         tx_thread = TxThread(session_id=session_id, command='bind')
         tx_thread.start()
 
     @staticmethod
-    def unbind_user(session_id):
+    def unbind_user(session_id: str) -> None:
         pass
 
     def post(self, request):
@@ -72,6 +81,10 @@ class UserView(APIView):
 
 
 class CreateMessageView(APIView):
+    """
+    Handles message requests from the user and queues messages.
+    """
+
     def post(self, request):
         print(f'Message request: {request.data}')
 

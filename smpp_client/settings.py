@@ -13,42 +13,6 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 from pathlib import Path
 import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
-
-if 'IS_DEPLOYED' in os.environ:
-    # SECURITY WARNING: keep the secret key used in production secret!
-    MY_SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
-
-    # SECURITY WARNING: don't run with debug turned on in production!
-    DEBUG = False
-    # DEBUG = True
-
-    # todo fix
-    ALLOWED_HOSTS = ['*']
-
-    # Static files (CSS, JavaScript, Images)
-    # https://docs.djangoproject.com/en/3.2/howto/static-files/
-
-    STATIC_ROOT = Path('frontend')
-
-    STATIC_URL = 'http://storage.googleapis.com/smpp-client-338121_media-bucket/static/'
-else:
-    MY_SECRET_KEY = 'django-insecure-so72wicdd-#nyft$z2sb+4pf#qf6h_2nyrg644jv#k1fw096li'
-
-    DEBUG = True
-
-    ALLOWED_HOSTS = []
-
-    STATIC_ROOT = Path.joinpath(BASE_DIR, 'frontend')
-
-    STATIC_URL = '/static/'
-
-SECRET_KEY = MY_SECRET_KEY
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -144,3 +108,9 @@ USE_TZ = True
 #     'DEFAULT_PERMISSION_CLASSES': [],
 #     'UNAUTHENTICATED_USER': None,
 # }
+
+# Override production variables if DJANGO_DEVELOPMENT env variable is set
+if os.environ.get('DJANGO_DEVELOPMENT'):
+    from .settings_development import *
+else:
+    from .settings_production import *

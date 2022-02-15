@@ -1,6 +1,7 @@
 import React from 'react';
 import { Divider, Box, TextField, Grid, Button, Typography, Switch, FormControlLabel } from '@mui/material';
 import { useForm } from "react-hook-form";
+import AboutDialog from "./AboutDialog";
 
 const MIN_PORT = 1;
 const MAX_PORT = 65535;
@@ -208,7 +209,7 @@ export default function BindForm(props) {
 
                     <Grid item xs={6}>
                         <Box>
-                            <FormControlLabel
+                            {/* <FormControlLabel
                                 control={<Switch size="small" />}
                                 label="Reconnect"
                                 // todo remove when reconnect is working
@@ -216,7 +217,7 @@ export default function BindForm(props) {
                                 {...register("reconnect")}
                             // display="flex"
                             // alignItems="center"
-                            />
+                            /> */}
 
                             <Button
                                 variant="contained"
@@ -234,9 +235,7 @@ export default function BindForm(props) {
                     </Grid>
 
                     <Grid item xs={6} align="right">
-                        <Button variant="contained" sx={{ m: 1 }} size="small">
-                            About
-                        </Button>
+                        <AboutDialog />
                     </Grid>
                 </Grid >
             </form >
