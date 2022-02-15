@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Grid, Box, Typography } from '@mui/material';
 //import './App.css';
-import useWebSocket, { ReadyState } from 'react-use-websocket';
 
 const Messages = (props) => {
     const messagesEndRef = useRef(null);
