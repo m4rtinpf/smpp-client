@@ -3,11 +3,15 @@ from asgiref.sync import async_to_sync
 from .models import users
 
 
-def get_group_name_from_session_id(session_id):
+def get_group_name_from_session_id(session_id: str) -> str:
     return f'message-group-{session_id}'
 
 
 class LogConsumer(WebsocketConsumer):
+    """
+    Handles websocket connections and sends log messages to the user.
+    """
+
     def __init__(self):
         super().__init__()
 

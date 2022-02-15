@@ -13,6 +13,10 @@ from .models import users
 
 
 class TxThread(threading.Thread):
+    """
+    Thread for connecting, sending messages, and disconnecting.
+    """
+
     def __init__(
             self, session_id, command,
     ):
@@ -78,6 +82,7 @@ class TxThread(threading.Thread):
         rx_thread = RxThread(client, smpplib_logger, self.session_id)
         rx_thread.start()
 
+        # Send messages
         while not user['is_done']:
             try:
                 message = user['message_queue'].get(block=False)
@@ -118,6 +123,11 @@ class TxThread(threading.Thread):
 
 
 class RxThread(threading.Thread):
+    """
+    Thread for receiving messages.
+    Also sends a message through `channels` telling a consumer to send the log messages to the user.
+    """
+
     def __init__(self, client, smpplib_logger, session_id):
         super().__init__()
         self.client = client
@@ -147,6 +157,10 @@ class RxThread(threading.Thread):
 
 
 class LogHandler(logging.Handler):
+    """
+    Store log messages and binding state for each user.
+    """
+
     def __init__(self, client, session_id):
         super().__init__()
         self.client = client
