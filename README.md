@@ -11,6 +11,8 @@ There's a live demo [here](http://35.193.201.166/).
 
 You'll need an SMSC server to try it out (you can find free test servers by searching for `smsc test server`).
 
+*Note: On the live demo you can send at most 50 messages in bulk form (there's a hard-coded cap).*
+
 ## Backend
 
 The backend is a RESTful API built using [django](https://www.djangoproject.com/)
